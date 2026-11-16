@@ -1,0 +1,136 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "title": "Automated Checks Total",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(automation_checks_total)",
+          "legendFormat": "Checks Total",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "title": "Detected Failures by Service",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum by (service) (automation_failures_total)",
+          "legendFormat": "{{ service }}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "title": "Deployment Rollbacks",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(deployment_rollbacks_total)",
+          "legendFormat": "Rollbacks",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "title": "Check Success Rate",
+      "type": "gauge",
+      "targets": [
+        {
+          "expr": "sum(rate(automation_checks_total{status=\"success\"}[5m])) / sum(rate(automation_checks_total[5m])) * 100",
+          "legendFormat": "Success Rate %",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 5,
+      "title": "Failure Detection Rate by Failure Type",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (failure_type) (rate(automation_failures_total[5m]))",
+          "legendFormat": "{{ failure_type }}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 6,
+      "title": "Automation Operation Latency (p95)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(automation_execution_seconds_bucket[5m])) by (le, operation))",
+          "legendFormat": "{{ operation }} (p95)",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["retail-store", "sre", "automation", "kubernetes"],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "title": "Retail Store - Platform Operations Automation Engine",
+  "uid": "retail-store-automation"
+}
