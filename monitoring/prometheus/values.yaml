@@ -1,0 +1,54 @@
+# ==============================================================================
+# Prometheus Helm Values for AWS Retail Store Microservices Observability
+# Scrapes Spring Boot Actuator (/actuator/prometheus) and Gin/NestJS (/metrics)
+# ==============================================================================
+
+server:
+  global:
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    evaluation_interval: 15s
+
+  persistentVolume:
+    enabled: false # Use ephemeral storage for lightweight dev / Minikube
+
+extraScrapeConfigs: |
+  - job_name: 'retail-store-microservices'
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+            - retail-store
+    relabel_configs:
+      # Scrape pods annotated with prometheus.io/scrape = true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      # Custom path from prometheus.io/path or fallback to /metrics
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      # Custom port from prometheus.io/port
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      # Add pod name label
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: kubernetes_pod_name
+      # Add service name label
+      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+        action: replace
+        target_label: app
+
+alertmanager:
+  enabled: false # Keep monitoring lightweight
+
+nodeExporter:
+  enabled: false # Strict exclusion: Node Exporter not needed initially
+
+kubeStateMetrics:
+  enabled: true # Enable Kube State Metrics for cluster state & pod lifecycle monitoring
