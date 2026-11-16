@@ -23,6 +23,8 @@ jobs:
           python3 -c "
           import glob, yaml
           for path in sorted(glob.glob('kubernetes/**/*.yaml', recursive=True)):
+              if 'upstream' in path:
+                  continue
               with open(path) as f:
                   list(yaml.safe_load_all(f))
               print(f'✓ Validated: {path}')

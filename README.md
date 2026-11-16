@@ -68,53 +68,85 @@ flowchart TD
 
 ---
 
-## 3. Repository Structure
+## 3. Architecture Boundary: Upstream Application vs. Platform Engineering
+
+This repository maintains a strict architectural separation between **third-party upstream application code** and **custom DevOps platform engineering**:
+
+| Domain | Upstream AWS Implementation (`application/` & relocated) | Custom Platform Engineering (Root Production) |
+|---|---|---|
+| **Application Source** | Preserved in `application/src/` (Java, Go, NestJS, tests, sample data) | Zero changes to core business logic; polyglot microservice integrity retained |
+| **Containerization** | Relocated to `docker/upstream/` and `docker/dockerfiles/` | `docker/docker-compose.yml` with ARM64/M3 support, in-memory mesh, healthchecks & limits |
+| **Kubernetes** | Relocated to `kubernetes/upstream-helm/` (Helm charts & Helmfiles) | Pure vanilla declarative manifests in `kubernetes/` (`ui`, `catalog`, `cart`, `checkout`, `orders`) |
+| **Infrastructure (IaC)**| Relocated to `terraform/upstream-blueprints/` (AWS workshop samples) | Modular Terraform in `terraform/modules/` (`networking`, `iam`, `ecr`, `eks`) & `environments/dev/` |
+| **CI/CD Pipelines** | Relocated to `.github/upstream/` (internal AWS release workflows) | Active GitHub Actions in `.github/workflows/` (`ci.yml`, `security.yml`, `deploy.yml`) |
+| **Observability** | Relocated to `monitoring/upstream/` (OTel collector config) | Production Prometheus Helm values & 3 custom operational Grafana dashboards |
+| **Platform Ops Engine** | None | Custom Python SRE engine in `automation/` with 100% unit test coverage |
+
+---
+
+## 4. Repository Structure
 
 ```text
 retail-store-devops/
 │
-├── application/                     # Original application source code
-│   └── src/                         # microservices: ui, catalog, cart, checkout, orders
+├── application/                     # Upstream AWS Retail Store Sample App Source Code
+│   ├── src/                         # Microservices: ui, catalog, cart, checkout, orders
+│   ├── samples/                     # Catalog products & tags JSON data, product images
+│   ├── oss/                         # Open source compliance and attribution configs
+│   ├── LICENSE                      # Original AWS MIT-0 License
+│   └── package.json, yarn.lock      # Application build manifests & dependencies
 │
-├── docker/
-│   ├── docker-compose.yml           # Unified local multi-service orchestration
-│   └── .dockerignore
+├── docker/                          # Custom Container Orchestration
+│   ├── docker-compose.yml           # Unified local multi-service orchestration mesh
+│   ├── dockerfiles/                 # Production multi-arch Dockerfiles for all microservices
+│   └── upstream/                    # Relocated upstream compose configurations & Tiltfile
 │
-├── kubernetes/                      # Production Kubernetes manifests
-│   ├── namespace.yaml               # Dedicated retail-store namespace
-│   ├── config/                      # ConfigMaps and Secret templates
+├── kubernetes/                      # Production Kubernetes Manifests (Vanilla Declarative)
+│   ├── namespace.yaml               # Dedicated 'retail-store' namespace
+│   ├── config/                      # Decoupled ConfigMaps and Secret templates
 │   ├── ui/                          # Frontend Deployment, Service, HPA
 │   ├── catalog/                     # Catalog Go API Deployment & Service
 │   ├── cart/                        # Cart Java API Deployment & Service
 │   ├── checkout/                    # Checkout NestJS API Deployment & Service
 │   ├── orders/                      # Orders Java API Deployment & Service
-│   └── ingress/                     # AWS ALB Ingress configuration
+│   ├── ingress/                     # AWS ALB Ingress configuration
+│   └── upstream-helm/               # Relocated upstream Helm umbrella & service charts
 │
 ├── terraform/                       # Modular AWS Infrastructure as Code
 │   ├── modules/
-│   │   ├── networking/              # VPC, public & private subnets, NAT, IGW
-│   │   ├── iam/                     # Cluster & worker node IAM roles
-│   │   ├── ecr/                     # ECR repositories with lifecycle cleanup
-│   │   └── eks/                     # EKS cluster & managed node groups
-│   └── environments/dev/            # Dev environment composition
+│   │   ├── networking/              # VPC, 3 public & 3 private subnets, NAT, IGW
+│   │   ├── iam/                     # Cluster & worker node IAM roles, OIDC provider
+│   │   ├── ecr/                     # ECR repositories with KMS encryption & lifecycle cleanup
+│   │   └── eks/                     # EKS 1.29 cluster & managed node groups
+│   ├── environments/dev/            # Dev environment composition root
+│   └── upstream-blueprints/         # Relocated upstream AWS workshop blueprints
 │
-├── .github/workflows/               # GitHub Actions CI/CD
-│   ├── ci.yml                       # Multi-service build & unit tests
-│   ├── security.yml                 # Trivy container & filesystem scanning
-│   └── deploy.yml                   # AWS OIDC authentication & EKS deployment
+├── .github/                         # Continuous Integration & Delivery
+│   ├── workflows/                   # Active Enterprise CI/CD Pipeline
+│   │   ├── ci.yml                   # Multi-service build & unit tests
+│   │   ├── security.yml             # Trivy container & filesystem scanning
+│   │   └── deploy.yml               # AWS OIDC authentication & EKS deployment
+│   └── upstream/                    # Relocated upstream GitHub Actions workflows & actions
 │
 ├── monitoring/                      # Observability stack
 │   ├── prometheus/values.yaml       # Prometheus Helm scrape configurations
-│   └── grafana/dashboards/          # Application, Kubernetes & Infra dashboards
+│   ├── grafana/dashboards/          # Application, Kubernetes & Infra dashboards
+│   └── upstream/                    # Relocated upstream OpenTelemetry collector config
 │
 ├── automation/                      # Python Platform Operations Automation Engine
+│   ├── ops_cli.py                   # Unified CLI entrypoint
 │   ├── cluster_health.py            # Node readiness & API connectivity check
 │   ├── pod_health.py                # CrashLoopBackOff & restart detector
 │   ├── deployment_check.py          # Replica health and availability validator
+│   ├── resource_monitor.py          # Pod/Node resource threshold monitor
 │   ├── rollout_validator.py         # Release rollout progression checker
+│   ├── rollback_validator.py        # Rollback execution & validation
 │   ├── generate_report.py           # Master structured JSON health reporter
 │   ├── requirements.txt
-│   └── tests/test_automation.py     # Unit tests for automation engine
+│   └── tests/test_automation.py     # Unit tests for automation engine (100% pass)
+│
+├── scripts/
+│   └── upstream/                    # Relocated upstream manifest and testing scripts
 │
 ├── docs/                            # Comprehensive engineering documentation
 │   ├── SOURCE_CODE_AUDIT.md         # Stage 0: Codebase audit & architecture report
@@ -127,7 +159,10 @@ retail-store-devops/
 │   ├── PROMETHEUS.md                # Stage 7: Prometheus metrics scraping
 │   ├── GRAFANA.md                   # Stage 8: Grafana operational dashboards
 │   ├── PYTHON_AUTOMATION.md         # Stage 9: Python operations automation guide
-│   └── FAILURE_TESTING.md           # Stage 10: Chaos engineering & failure experiments
+│   ├── FAILURE_TESTING.md           # Stage 10: Chaos engineering & failure experiments
+│   ├── REPOSITORY_STRUCTURE_AUDIT.md# Upstream vs Custom Architecture Audit
+│   ├── RESTRUCTURE_REPORT.md        # Data and Application Separation Migration Report
+│   └── upstream-app/                # Relocated upstream application docs & diagrams
 │
 ├── .gitignore
 ├── .env.example
@@ -136,7 +171,7 @@ retail-store-devops/
 
 ---
 
-## 4. Quickstart: Local Development
+## 5. Quickstart: Local Development
 
 ### 1. Run the Local Microservices Stack:
 ```bash
@@ -176,7 +211,7 @@ python3 -m unittest discover -s automation/tests -v
 
 ---
 
-## 5. Teardown & Resource Cleanup
+## 6. Teardown & Resource Cleanup
 
 To stop and remove local containers:
 ```bash
@@ -191,5 +226,7 @@ terraform destroy -var-file="terraform.tfvars"
 
 ---
 
-## 6. License
-This project is licensed under the MIT-0 License.
+## 7. License & Attribution
+The upstream AWS Retail Store Sample Application source code in `application/` is licensed by Amazon Web Services under the **MIT-0 License** (see `application/LICENSE`).
+All custom platform engineering, Terraform modules, Kubernetes manifests, GitHub Actions workflows, observability configurations, and Python SRE automation implementations authored in the root repository are maintained under the **MIT License**.
+

@@ -35,10 +35,10 @@ build/
 develop-eggs/
 dist/
 downloads/
-eggs/
-.eggs/
-lib/
+# Python build artifacts
+# lib/
 lib64/
+!terraform/upstream-blueprints/lib/
 parts/
 sdist/
 var/
