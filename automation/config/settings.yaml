@@ -1,0 +1,55 @@
+# ==============================================================================
+# Platform Operations Automation Engine - Configuration Settings
+# ==============================================================================
+
+cluster:
+  default_namespace: "retail-store"
+  monitored_services:
+    - "ui"
+    - "catalog"
+    - "cart"
+    - "checkout"
+    - "orders"
+  connect_timeout_seconds: 10
+  request_timeout_seconds: 30
+
+thresholds:
+  restart_spike_threshold: 3
+  cpu_warning_percentage: 80.0
+  cpu_critical_percentage: 95.0
+  memory_warning_percentage: 85.0
+  memory_critical_percentage: 95.0
+  p95_latency_ms_warning: 500
+  p95_latency_ms_critical: 1500
+
+detection:
+  critical_reasons:
+    - "CrashLoopBackOff"
+    - "ImagePullBackOff"
+    - "ErrImagePull"
+    - "OOMKilled"
+    - "ContainerCannotRun"
+    - "CreateContainerConfigError"
+    - "DeadlineExceeded"
+  max_event_age_minutes: 30
+  recent_log_lines: 50
+
+remediation:
+  dry_run_default: true
+  require_confirmation: true
+  max_consecutive_rollbacks: 1
+  min_healthy_replicas: 1
+  post_rollback_wait_seconds: 15
+  rollback_verification_timeout: 120
+
+reporting:
+  output_dir: "reports"
+  default_report_file: "cluster-diagnostics.json"
+  incident_log_file: "incident-history.json"
+  pretty_print: true
+
+metrics:
+  enabled: true
+  port: 9102
+  metrics_path: "/metrics"
+  collection_interval_seconds: 15
