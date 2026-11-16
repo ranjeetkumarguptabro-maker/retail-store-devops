@@ -7,7 +7,7 @@ Inspects ReplicaSet history, validates rollback revisions, and verifies traffic 
 import sys
 import json
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("rollback_validator")

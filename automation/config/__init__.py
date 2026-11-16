@@ -86,6 +86,26 @@ class ConfigManager:
         return default
 
     @property
+    def namespace(self) -> str:
+        return self.get("cluster", "default_namespace", "retail-store")
+
+    @property
+    def cluster_name(self) -> str:
+        return self.get("cluster", "name", "retail-store-cluster")
+
+    @property
+    def metrics_port(self) -> int:
+        return self.get("metrics", "port", 9102)
+
+    @property
+    def dry_run(self) -> bool:
+        return self.get("remediation", "dry_run_default", True)
+
+    @property
+    def failure_rules(self) -> Dict[str, Any]:
+        return self.get("thresholds", default={})
+
+    @property
     def raw(self) -> Dict[str, Any]:
         return self._config
 

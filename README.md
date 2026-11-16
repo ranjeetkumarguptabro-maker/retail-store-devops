@@ -134,16 +134,14 @@ retail-store-devops/
 │   └── upstream/                    # Relocated upstream OpenTelemetry collector config
 │
 ├── automation/                      # Python Platform Operations Automation Engine
-│   ├── ops_cli.py                   # Unified CLI entrypoint
-│   ├── cluster_health.py            # Node readiness & API connectivity check
-│   ├── pod_health.py                # CrashLoopBackOff & restart detector
-│   ├── deployment_check.py          # Replica health and availability validator
-│   ├── resource_monitor.py          # Pod/Node resource threshold monitor
-│   ├── rollout_validator.py         # Release rollout progression checker
-│   ├── rollback_validator.py        # Rollback execution & validation
-│   ├── generate_report.py           # Master structured JSON health reporter
-│   ├── requirements.txt
-│   └── tests/test_automation.py     # Unit tests for automation engine (100% pass)
+│   ├── ops_cli.py                   # Unified SRE CLI (diagnose, monitor, verify, rollback, export)
+│   ├── config/                      # YAML operational thresholds & ConfigManager
+│   ├── collectors/                  # Pod, Node, Resource & Event telemetry ingestion
+│   ├── analyzers/                   # Failure detection, resource anomalies, deployment checks
+│   ├── remediation/                 # RollbackManager (dry-run & confirmation) & RecoveryValidator
+│   ├── reporting/                   # IncidentReportGenerator & Prometheus metrics exporter
+│   ├── requirements.txt             # Engine dependencies (kubernetes, pyyaml, prometheus-client)
+│   └── tests/                       # Complete automated unit test suite (38/38 passing)
 │
 ├── scripts/
 │   └── upstream/                    # Relocated upstream manifest and testing scripts

@@ -1,7 +1,7 @@
 """Automated deployment verification, rollout progression, and endpoint health probing."""
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 import requests
 
 logger = logging.getLogger("operations_engine.analyzers.deployment")

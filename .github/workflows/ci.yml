@@ -44,3 +44,33 @@ jobs:
       - name: Build Verification (Docker Compose Syntax)
         run: |
           docker compose -f docker/docker-compose.yml config
+
+  python-operations-engine:
+    name: "Test & Lint Python SRE Automation Engine"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r automation/requirements.txt
+
+      - name: Run Ruff Linter
+        run: |
+          ruff check automation/
+
+      - name: Run Unit Tests & Code Coverage
+        run: |
+          pytest automation/tests --cov=automation --cov-report=term-missing
+
+      - name: Verify Unified SRE CLI
+        run: |
+          python automation/ops_cli.py --help
