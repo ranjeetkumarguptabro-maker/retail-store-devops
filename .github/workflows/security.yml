@@ -1,0 +1,43 @@
+name: "Security Scan (Trivy)"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  trivy-scan:
+    name: "Trivy Security & Vulnerability Scan"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy Configuration & IaC Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Scan Storefront UI Container Image
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: 'public.ecr.aws/aws-containers/retail-store-sample-ui:1.0.0'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Scan Catalog Container Image
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: 'public.ecr.aws/aws-containers/retail-store-sample-catalog:1.0.0'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
