@@ -1,0 +1,178 @@
+# ==============================================================================
+# AWS Retail Store Sample App - Unified Local Docker Compose Orchestration
+# Supports standalone execution (in-memory mode) and full microservices mesh.
+# Multi-arch compatible: Apple Silicon (ARM64) and x86_64.
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # Storefront UI Service (Java 21 / Spring Boot 3.5 + Thymeleaf)
+  # ----------------------------------------------------------------------------
+  ui:
+    image: public.ecr.aws/aws-containers/retail-store-sample-ui:1.0.0
+    container_name: retail-store-ui
+    hostname: ui
+    restart: unless-stopped
+    ports:
+      - "${UI_PORT:-8888}:8080"
+    environment:
+      - JAVA_OPTS=-XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/urandom
+      - SERVER_TOMCAT_ACCESSLOG_ENABLED=true
+      - RETAIL_UI_SEARCH_ENABLED=${SEARCH_ENABLED:-false}
+      - RETAIL_UI_ENDPOINTS_CATALOG=http://catalog:8080
+      - RETAIL_UI_ENDPOINTS_CARTS=http://cart:8080
+      - RETAIL_UI_ENDPOINTS_CHECKOUT=http://checkout:8080
+      - RETAIL_UI_ENDPOINTS_ORDERS=http://orders:8080
+    depends_on:
+      catalog:
+        condition: service_healthy
+      cart:
+        condition: service_healthy
+      checkout:
+        condition: service_healthy
+      orders:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+        reservations:
+          cpus: "0.25"
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - retail-network
+
+  # ----------------------------------------------------------------------------
+  # Product Catalog Service (Go Gin API)
+  # ----------------------------------------------------------------------------
+  catalog:
+    image: public.ecr.aws/aws-containers/retail-store-sample-catalog:1.0.0
+    container_name: retail-store-catalog
+    hostname: catalog
+    restart: unless-stopped
+    ports:
+      - "${CATALOG_PORT:-8081}:8080"
+    environment:
+      - GIN_MODE=release
+      - RETAIL_CATALOG_PERSISTENCE_PROVIDER=in-memory
+      - RETAIL_CATALOG_SEARCH_ENABLED=false
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - retail-network
+
+  # ----------------------------------------------------------------------------
+  # Cart Service (Java 21 / Spring Boot 3.5)
+  # ----------------------------------------------------------------------------
+  cart:
+    image: public.ecr.aws/aws-containers/retail-store-sample-cart:1.0.0
+    container_name: retail-store-cart
+    hostname: cart
+    restart: unless-stopped
+    ports:
+      - "${CART_PORT:-8082}:8080"
+    environment:
+      - SERVER_TOMCAT_ACCESSLOG_ENABLED=true
+      - RETAIL_CART_PERSISTENCE_PROVIDER=in-memory
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.2"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - retail-network
+
+  # ----------------------------------------------------------------------------
+  # Checkout Service (Node.js 20 / NestJS 11 + TypeScript)
+  # ----------------------------------------------------------------------------
+  checkout:
+    image: public.ecr.aws/aws-containers/retail-store-sample-checkout:1.0.0
+    container_name: retail-store-checkout
+    hostname: checkout
+    restart: unless-stopped
+    ports:
+      - "${CHECKOUT_PORT:-8085}:8080"
+    environment:
+      - RETAIL_CHECKOUT_PERSISTENCE_PROVIDER=in-memory
+      - RETAIL_CHECKOUT_ENDPOINTS_ORDERS=http://orders:8080
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - retail-network
+
+  # ----------------------------------------------------------------------------
+  # Orders Service (Java 21 / Spring Boot 3.5)
+  # ----------------------------------------------------------------------------
+  orders:
+    image: public.ecr.aws/aws-containers/retail-store-sample-orders:1.0.0
+    container_name: retail-store-orders
+    hostname: orders
+    restart: unless-stopped
+    ports:
+      - "${ORDERS_PORT:-8083}:8080"
+    environment:
+      - SERVER_TOMCAT_ACCESSLOG_ENABLED=true
+      - RETAIL_ORDERS_PERSISTENCE_PROVIDER=in-memory
+      - RETAIL_ORDERS_MESSAGING_PROVIDER=in-memory
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.2"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - retail-network
+
+networks:
+  retail-network:
+    name: retail-store-network
+    driver: bridge
