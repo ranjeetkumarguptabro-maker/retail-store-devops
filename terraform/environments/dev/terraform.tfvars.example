@@ -1,0 +1,6 @@
+aws_region         = "us-east-1"
+environment        = "dev"
+cluster_name       = "retail-store"
+desired_capacity   = 2
+instance_types     = ["t3.medium"]
+enable_nat_gateway = true
