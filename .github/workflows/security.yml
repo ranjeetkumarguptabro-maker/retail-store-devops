@@ -11,6 +11,8 @@ jobs:
   security-and-sbom:
     name: "Trivy Security, Secrets & SBOM Scan"
     runs-on: ubuntu-latest
+    env:
+      TRIVY_OFFLINE_SCAN: "true"
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -24,6 +26,7 @@ jobs:
           format: 'table'
           exit-code: '0'
           severity: 'CRITICAL,HIGH'
+          trivy-config: 'trivy.yaml'
 
       - name: Run Trivy IaC & Configuration Scanner
         uses: aquasecurity/trivy-action@master
@@ -33,6 +36,7 @@ jobs:
           format: 'table'
           exit-code: '0'
           severity: 'CRITICAL,HIGH'
+          trivy-config: 'trivy.yaml'
 
       - name: Generate Software Bill of Materials (SBOM) - Filesystem
         uses: aquasecurity/trivy-action@master
@@ -41,6 +45,7 @@ jobs:
           scan-ref: '.'
           format: 'cyclonedx'
           output: 'sbom-filesystem.cdx.json'
+          trivy-config: 'trivy.yaml'
 
       - name: Upload SBOM Artifact
         uses: actions/upload-artifact@v4

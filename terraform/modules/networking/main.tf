@@ -10,8 +10,8 @@ resource "aws_vpc" "main" {
   tags = merge(
     var.tags,
     {
-      Name                                           = "${var.environment}-retail-vpc"
-      "kubernetes.io/cluster/${var.cluster_name}"     = "shared"
+      Name                                        = "${var.environment}-retail-vpc"
+      "kubernetes.io/cluster/${var.cluster_name}" = "shared"
     }
   )
 }
@@ -37,9 +37,9 @@ resource "aws_subnet" "public" {
   tags = merge(
     var.tags,
     {
-      Name                                           = "${var.environment}-public-${var.availability_zones[count.index]}"
-      "kubernetes.io/cluster/${var.cluster_name}"     = "shared"
-      "kubernetes.io/role/elb"                       = "1"
+      Name                                        = "${var.environment}-public-${var.availability_zones[count.index]}"
+      "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+      "kubernetes.io/role/elb"                    = "1"
     }
   )
 }
@@ -53,9 +53,9 @@ resource "aws_subnet" "private" {
   tags = merge(
     var.tags,
     {
-      Name                                           = "${var.environment}-private-${var.availability_zones[count.index]}"
-      "kubernetes.io/cluster/${var.cluster_name}"     = "shared"
-      "kubernetes.io/role/internal-elb"              = "1"
+      Name                                        = "${var.environment}-private-${var.availability_zones[count.index]}"
+      "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+      "kubernetes.io/role/internal-elb"           = "1"
     }
   )
 }

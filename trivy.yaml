@@ -1,0 +1,10 @@
+# Trivy Configuration File
+# https://aquasecurity.github.io/trivy/latest/docs/references/configuration/config-file/
+
+scan:
+  offline-scan: true
+  skip-dirs:
+    - .cache
+    - .yarn
+    - target
+    - build
