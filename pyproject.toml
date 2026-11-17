@@ -19,6 +19,10 @@ dependencies = [
 pythonpath = ["."]
 testpaths = ["automation/tests"]
 addopts = "-v"
+markers = [
+    "unit: Fast unit tests with mocked Kubernetes API",
+    "integration: Integration tests requiring active Kubernetes cluster (kind or Minikube)",
+]
 
 [tool.ruff]
 line-length = 120

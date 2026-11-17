@@ -8,6 +8,7 @@ from automation.ops_cli import (
     cmd_monitor_resources,
     cmd_verify_deployment,
     cmd_rollback,
+    cmd_incident_lifecycle,
 )
 
 
@@ -117,4 +118,29 @@ def test_cmd_rollback_dry_run():
 
         with pytest.raises(SystemExit) as exc_info:
             cmd_rollback(args)
+        assert exc_info.value.code == 0
+
+
+def test_cmd_incident_lifecycle_execution(tmp_path):
+    parser = build_parser()
+    args = parser.parse_args(["incident-lifecycle", "-s", "cart", "--dry-run", "--output-dir", str(tmp_path)])
+
+    with patch("automation.ops_cli.get_k8s_clients") as mock_clients, \
+         patch("automation.ops_cli.IncidentLifecycleOrchestrator.run_lifecycle") as mock_run:
+
+        mock_clients.return_value = (MagicMock(), MagicMock())
+        mock_run.return_value = {
+            "incident_id": "INC-TEST-cart",
+            "status": "DRY_RUN_COMPLETED",
+            "target_service": "cart",
+            "namespace": "retail-store",
+            "duration_seconds": 1.23,
+            "timeline": [{"stage": "DETECT", "message": "CrashLoopBackOff detected", "status": "FAILURE"}],
+            "diagnosis": {"failure_type": "CrashLoopBackOff", "root_cause": "NPE", "action": "Rollback"},
+            "remediation_plan": {"action": "Rollback deployment"},
+            "report_files": {"json": str(tmp_path / "inc.json"), "markdown": str(tmp_path / "inc.md")},
+        }
+
+        with pytest.raises(SystemExit) as exc_info:
+            cmd_incident_lifecycle(args)
         assert exc_info.value.code == 0

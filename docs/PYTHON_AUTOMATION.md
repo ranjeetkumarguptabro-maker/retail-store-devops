@@ -1,6 +1,6 @@
 # Python Platform Operations Automation Engine
 
-The Retail Store DevOps platform includes an enterprise-grade Site Reliability Engineering (SRE) automation engine written in Python. It detects microservice failures, audits resource quotas and anomalies, verifies zero-downtime rolling updates, gates and executes safe rollbacks, exports real-time Prometheus telemetry, and generates structured incident reports.
+The Retail Store DevOps platform includes an enterprise-grade Site Reliability Engineering (SRE) automation engine written in Python. It detects microservice failures, audits resource quotas and anomalies, verifies zero-downtime rolling updates, gates and executes safe rollbacks, orchestrates complete incident lifecycles, exports real-time Prometheus telemetry, and generates structured incident post-mortems.
 
 ---
 
@@ -21,17 +21,24 @@ automation/
 │   ├── failure_detector.py    # PodFailureDetector: CrashLoop, ImagePull, OOM, Pending
 │   ├── resource_analyzer.py   # Capacity exhaustion, missing limit audits, right-sizing
 │   └── deployment_analyzer.py # Rollout progression and synthetic HTTP endpoint probing
-├── remediation/               # Automated recovery and safety gates
+├── remediation/               # Automated recovery, safety gates & incident lifecycle
+│   ├── incident_lifecycle.py  # 7-stage end-to-end incident response lifecycle orchestrator
 │   ├── rollback.py            # RollbackManager with preflight checks and dry-run safety
 │   └── recovery_validator.py  # Post-rollback replica stabilization and HTTP verification
 ├── reporting/                 # Operational reporting & telemetry
 │   ├── json_report.py         # IncidentReportGenerator producing reports/cluster-diagnostics.json
 │   └── metrics.py             # Prometheus metrics exporter (port 9102)
-└── tests/                     # Automated unit test suite with 100% mocked Kubernetes API
-    ├── test_collectors.py
+└── tests/
+    ├── integration/           # Cluster integration tests (Minikube / kind / live cluster)
+    │   ├── conftest.py        # Cluster reachability check & namespace fixture
+    │   ├── test_crashloop_integration.py
+    │   ├── test_failed_deployment_integration.py
+    │   └── test_rollback_recovery_integration.py
+    ├── test_collectors.py     # Mocked unit tests
     ├── test_failure_detector.py
     ├── test_analyzers.py
     ├── test_remediation.py
+    ├── test_incident_lifecycle.py
     ├── test_reporting.py
     ├── test_ops_cli.py
     ├── test_config.py
@@ -40,67 +47,76 @@ automation/
 
 ---
 
-## 2. Six Core Operational Capabilities
+## 2. End-to-End Automated Incident Lifecycle
 
-### 1. Intelligent Pod Failure Detection
-Identifies complex Kubernetes container failure modes:
-- **CrashLoopBackOff**: Analyzes non-zero exit codes, retrieves the last 50 lines of container stderr, and recommends database or configuration checks.
-- **ImagePullBackOff / ErrImagePull**: Flags missing image tags or ECR credentials.
-- **OOMKilled**: Detects exit code 137 container terminations and generates memory limit increase recommendations.
-- **Pending Pods**: Correlates pod scheduling failures with node CPU/memory exhaustion events.
-- **Restart Spikes**: Alerts on flapping containers exceeding restart thresholds.
+The engine provides an automated 7-stage incident response lifecycle (`ops_cli.py incident-lifecycle`):
 
-### 2. Resource Monitoring & Anomaly Detection
-Audits cluster capacity against pod consumption:
-- Enforces best-practice CPU and memory requests to prevent scheduler starvation.
-- Detects missing memory limits to prevent noisy-neighbor OOM events.
-- Flags worker nodes reporting `MemoryPressure` or `DiskPressure`.
-- Calculates cluster-wide CPU and memory reservation percentages.
+```mermaid
+flowchart TD
+    S1[Stage 1: Detect] -->|CrashLoopBackOff / OOM / ImagePull| S2[Stage 2: Collect]
+    S2 -->|Forensic Logs & K8s Events| S3[Stage 3: Analyze]
+    S3 -->|Isolate Root Cause & Severity| S4[Stage 4: Recommend]
+    S4 -->|Formulate Rollback Strategy| S5{Stage 5: Approval Gate}
+    S5 -->|Denied / Dry-Run| S5A[Halt / Simulation Complete]
+    S5 -->|Approved| S5B[Execute Rollback Undo]
+    S5B --> S6[Stage 6: Verify Recovery]
+    S6 -->|Replica Stabilization & HTTP Probe| S7[Stage 7: Generate Post-Mortem]
+    S7 --> ARTIFACTS[reports/incidents/INC-*.json & .md]
+```
 
-### 3. Automated Deployment Verification
-- Tracks `updated_replicas` and `available_replicas` across rolling deployments.
-- Verifies zero-downtime rollout progression without dropped connections.
-- Executes synthetic HTTP health checks against service endpoints (`/`, `/health`, `/catalog/products`).
-
-### 4. Safe Automated Rollback & Recovery
-- **Pre-flight safety validation**: Verifies deployment history and confirms prior revisions exist before triggering rollbacks.
-- **Dry-run simulation mode (`--dry-run`)**: Audits and outputs the exact recovery actions without modifying cluster state.
-- **Authorization confirmation gate (`--confirm`)**: Protects production environments from unintended mutations.
-- **Post-recovery validation**: Polls deployment stabilization and runs synthetic probes to confirm traffic recovery.
-
-### 5. Prometheus Telemetry & Metrics Exporter
-Exposes real-time SRE metrics on port 9102:
-- `automation_checks_total{check_type="...", status="..."}`
-- `automation_failures_total{service="...", failure_type="..."}`
-- `deployment_rollbacks_total{deployment="...", status="..."}`
-- `automation_execution_seconds{operation="..."}`
-- Pre-configured Grafana dashboard located at [`monitoring/grafana/dashboards/platform-operations-automation.json`](../monitoring/grafana/dashboards/platform-operations-automation.json).
-
-### 6. Incident Reporting
-Consolidates diagnostic telemetry into structured JSON:
-- Default output path: [`reports/cluster-diagnostics.json`](../reports/cluster-diagnostics.json).
-- Includes ISO 8601 timestamps, service health matrices, root-cause statements, and suggested remediation steps.
+1. **Detect**: Continuously scans pods and deployments in the target namespace (e.g. failing `cart` pod in `CrashLoopBackOff`).
+2. **Collect**: Ingests container stderr tail logs, Kubernetes warning events, termination reasons, and restart counts.
+3. **Analyze**: Classifies the failure mode (e.g. `NullPointerException: DB connection failed`), isolates the primary cause, and assigns severity.
+4. **Recommend**: Generates an actionable remediation strategy (e.g. roll back deployment `retail-store-cart` to previous revision).
+5. **Approval Gate & Execution**: Validates deployment revision history and enforces an approval gate (`--auto-approve` or interactive confirmation).
+6. **Verify Recovery**: Polls deployment until all replicas stabilize, verifies no new crashing pods are scheduled, and probes HTTP endpoints.
+7. **Report & Post-Mortem**: Generates a structured JSON incident record and a GitHub-flavored Markdown post-mortem document.
 
 ---
 
-## 3. Unified SRE CLI Commands Runbook
+## 3. Dual-Tier Testing Strategy: Unit vs. Real Integration Tests
+
+The test suite strictly distinguishes **mocked unit tests** from **real cluster integration tests**:
+
+| Test Tier | Location | Execution Context | Purpose |
+|---|---|---|---|
+| **Tier 1: Unit Tests** | `automation/tests/test_*.py` | Sandboxed Python runner (no K8s cluster required) | Fast validation of parser, collectors, analyzers, remediation logic, and metrics with 100% mocked Kubernetes API responses (**44 passing tests**) |
+| **Tier 2: Cluster Integration Tests** | `automation/tests/integration/` | Active Minikube, kind, or Amazon EKS cluster | Validates behavior against real Kubernetes API, real container crashes, live pod events, actual rollbacks, and recovery verification |
+
+### Running Unit Tests:
+```bash
+pytest -m "not integration" --cov=automation
+```
+
+### Running Real Cluster Integration Tests:
+```bash
+# Launch via helper script (provisions kind cluster automatically if needed):
+bash scripts/run_integration_tests.sh
+
+# Or directly via Pytest against an active cluster:
+pytest automation/tests/integration -m integration -v
+```
+
+---
+
+## 4. Unified SRE CLI Runbook
 
 ```bash
-# 1. Diagnose cluster health and detect pod failures
+# 1. Execute end-to-end incident lifecycle with automated rollback approval
+python3 automation/ops_cli.py incident-lifecycle --service cart --auto-approve
+
+# 2. Simulate incident lifecycle in dry-run mode (safe audit)
+python3 automation/ops_cli.py incident-lifecycle --service cart --dry-run
+
+# 3. Diagnose cluster health and output terminal table
 python3 automation/ops_cli.py diagnose --namespace retail-store
 
-# 2. Output diagnosis in raw JSON format
-python3 automation/ops_cli.py diagnose --namespace retail-store --format json
-
-# 3. Audit resource requests, limits, and cluster capacity
+# 4. Audit resource requests, limits, and cluster allocation percentages
 python3 automation/ops_cli.py monitor-resources --namespace retail-store
 
-# 4. Verify deployment rollouts and test service endpoints
+# 5. Verify deployment rollouts and test service endpoints
 python3 automation/ops_cli.py verify-deployment --namespace retail-store \
   --service-urls '{"ui":"http://localhost:8888","catalog":"http://localhost:8081/catalog/products"}'
-
-# 5. Simulate a deployment rollback (dry-run mode)
-python3 automation/ops_cli.py rollback --deployment retail-store-cart --dry-run
 
 # 6. Execute an authorized live deployment rollback
 python3 automation/ops_cli.py rollback --deployment retail-store-cart --confirm
@@ -109,44 +125,37 @@ python3 automation/ops_cli.py rollback --deployment retail-store-cart --confirm
 python3 automation/ops_cli.py export-metrics --port 9102
 ```
 
-Sample CLI output for `diagnose`:
+Sample CLI output for `incident-lifecycle`:
 ```text
 ============================================================
-             RETAIL STORE CLUSTER DIAGNOSTICS               
+         AUTOMATED INCIDENT LIFECYCLE ORCHESTRATION         
 ============================================================
-Namespace: retail-store
-
-SERVICE HEALTH OVERVIEW:
-  Ui           HEALTHY
-  Catalog      HEALTHY
-  Cart         CRASHLOOPBACKOFF
-  Orders       HEALTHY
-  Checkout     HEALTHY
-
-INCIDENT ROOT CAUSE & REMEDIATION:
+Incident ID:        INC-20261117-132200-cart
+Target Service:     Cart
+Namespace:          retail-store
+Lifecycle Status:   RESOLVED
+Duration:           4.82s
 ------------------------------------------------------------
-Service: Cart
-  Issue:       CrashLoopBackOff on container 'cart': Back-off 5m restarting failed container
-  Remediation: Inspect application configuration, database connection strings, and fatal stack traces in pod logs. Verify liveness probes are not timing out.
-  Pod Log Extract (retail-store-cart-999-abc):
-    | Exception in thread 'main' java.lang.NullPointerException: DB connection failed
-    |     at com.amazonaws.retailstore.cart.CartService.connect(CartService.java:42)
+LIFECYCLE AUDIT TRAIL:
+  [FAILURE_CONFIRMED] STAGE_1_DETECTION    Detected failing pod 'retail-store-cart-999-abc'
+  [COMPLETED     ] STAGE_2_COLLECTION   Collected 5 events and 182 bytes of log evidence
+  [ROOT_CAUSE_ISO] STAGE_3_ANALYSIS     Diagnosed failure: [CRASHLOOPBACKOFF] java.lang.NullPointerException
+  [COMPLETED     ] STAGE_4_RECOMMEND    Recommended Action: Roll back deployment 'retail-store-cart'
+  [ROLLBACK_APPLI] STAGE_5_EXECUTION    Rollback trigger succeeded: deployment.apps/retail-store-cart rolled back
+  [RECOVERED     ] STAGE_6_VERIFICATION Service 'cart' stabilized and healthy! (HTTP 200)
+  [REPORT_SAVED  ] STAGE_7_REPORTING    Incident reports generated: reports/incidents/INC-20261117-132200-cart.json
 
+POST-MORTEM ARTIFACTS:
+  JSON Record:      reports/incidents/INC-20261117-132200-cart.json
+  Markdown Report:  reports/incidents/INC-20261117-132200-cart.md
 ============================================================
-[INFO] Comprehensive diagnostic report written to: reports/cluster-diagnostics.json
 ```
 
 ---
 
-## 4. Automated CI/CD Testing & Quality Gates
+## 5. Automated CI/CD Testing & Quality Gates
 
 The engine is integrated into GitHub Actions ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)):
-
-```bash
-# 1. Ruff linting
-ruff check automation/
-
-# 2. Unit testing with coverage analysis
-pytest automation/tests --cov=automation --cov-report=term-missing
-```
-All unit tests mock the Kubernetes API client, ensuring fast, deterministic, and sandboxed test execution without requiring live cloud cluster connectivity.
+1. **Ruff Linting**: `ruff check automation/`
+2. **Unit Testing & Coverage**: `pytest automation/tests -m "not integration" --cov=automation --cov-report=term-missing`
+3. **CLI Syntax Verification**: `python automation/ops_cli.py --help`

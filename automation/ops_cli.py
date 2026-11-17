@@ -33,6 +33,7 @@ from automation.analyzers import (
 )
 from automation.remediation import (
     RollbackManager,
+    IncidentLifecycleOrchestrator,
 )
 from automation.reporting import (
     IncidentReportGenerator,
@@ -246,6 +247,62 @@ def cmd_rollback(args):
     sys.exit(0 if res.get("success") else 1)
 
 
+def cmd_incident_lifecycle(args):
+    """Executes the complete 7-stage incident lifecycle: Detect -> Collect -> Analyze -> Recommend -> Gate -> Verify -> Report."""
+    core_api, apps_api = get_k8s_clients()
+    metrics = get_metrics_exporter()
+
+    orchestrator = IncidentLifecycleOrchestrator(
+        core_api=core_api,
+        apps_api=apps_api,
+        namespace=args.namespace,
+        output_dir=args.output_dir,
+    )
+
+    with metrics.track_duration("incident_lifecycle"):
+        report = orchestrator.run_lifecycle(
+            target_service=args.service,
+            auto_approve=args.auto_approve,
+            dry_run=args.dry_run,
+            service_url=args.service_url,
+        )
+
+    if args.format == "json":
+        print(json.dumps(report, indent=2))
+    else:
+        print("============================================================")
+        print("         AUTOMATED INCIDENT LIFECYCLE ORCHESTRATION         ")
+        print("============================================================")
+        print(f"Incident ID:        {report.get('incident_id')}")
+        print(f"Target Service:     {str(report.get('target_service', 'all')).capitalize()}")
+        print(f"Namespace:          {report.get('namespace')}")
+        print(f"Lifecycle Status:   {report.get('status')}")
+        print(f"Duration:           {report.get('duration_seconds')}s")
+        print("------------------------------------------------------------")
+        print("LIFECYCLE AUDIT TRAIL:")
+        for t in report.get("timeline", []):
+            st = t.get("status", "OK")
+            stage = t.get("stage", "")
+            print(f"  [{st:<14}] {stage:<20} {t.get('message')}")
+
+        diag = report.get("diagnosis")
+        if diag:
+            print("\nROOT CAUSE DIAGNOSIS:")
+            print(f"  Failure Mode:     {diag.get('failure_type')}")
+            print(f"  Root Cause:       {diag.get('root_cause')}")
+            print(f"  Action Plan:      {report.get('remediation_plan', {}).get('action')}")
+
+        if report.get("report_files"):
+            print("\nPOST-MORTEM ARTIFACTS:")
+            print(f"  JSON Record:      {report['report_files']['json']}")
+            print(f"  Markdown Report:  {report['report_files']['markdown']}")
+        print("============================================================")
+
+    # Exit code: 0 if resolved, dry-run completed, or clean; 1 if remediation failed or waiting for approval
+    success_states = ("RESOLVED", "DRY_RUN_COMPLETED", "NO_INCIDENT")
+    sys.exit(0 if report.get("status") in success_states else 1)
+
+
 def cmd_export_metrics(args):
     """Starts Prometheus metrics exporter HTTP daemon on specified port."""
     metrics = get_metrics_exporter()
@@ -370,7 +427,21 @@ def build_parser() -> argparse.ArgumentParser:
     p_rb.add_argument("--confirm", action="store_true", help="Confirm authorization for live rollback execution")
     p_rb.add_argument("--to-revision", type=int, default=None, help="Specific revision number to roll back to")
 
-    # 5. export-metrics
+    # 5. incident-lifecycle (end-to-end 7-stage incident response)
+    p_life = subparsers.add_parser(
+        "incident-lifecycle",
+        aliases=["remediate-incident", "lifecycle"],
+        help="Execute automated 7-stage incident response (Detect->Collect->Analyze->Recommend->Gate->Verify->Report)",
+    )
+    p_life.add_argument("--service", "-s", default=None, help="Target service (e.g. cart, ui, catalog)")
+    p_life.add_argument("--namespace", "-n", default="retail-store", help="Kubernetes namespace")
+    p_life.add_argument("--auto-approve", action="store_true", help="Authorize automated rollback execution without interactive gate")
+    p_life.add_argument("--dry-run", action="store_true", help="Simulate rollback and verification without modifying cluster")
+    p_life.add_argument("--service-url", default=None, help="Service URL to probe for post-recovery verification")
+    p_life.add_argument("--output-dir", default="reports/incidents", help="Directory to save JSON & Markdown incident post-mortems")
+    p_life.add_argument("--format", choices=["table", "json"], default="table", help="Terminal output layout")
+
+    # 6. export-metrics
     p_met = subparsers.add_parser("export-metrics", help="Run background Prometheus metrics HTTP exporter")
     p_met.add_argument("--port", "-p", type=int, default=9102, help="Port to expose Prometheus metrics (default: 9102)")
 
@@ -405,6 +476,9 @@ def main():
         "monitor-resources": cmd_monitor_resources,
         "verify-deployment": cmd_verify_deployment,
         "rollback": cmd_rollback,
+        "incident-lifecycle": cmd_incident_lifecycle,
+        "remediate-incident": cmd_incident_lifecycle,
+        "lifecycle": cmd_incident_lifecycle,
         "export-metrics": cmd_export_metrics,
         "cluster": cmd_legacy_cluster,
         "pods": cmd_legacy_pods,
