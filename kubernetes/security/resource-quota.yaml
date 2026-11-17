@@ -1,0 +1,17 @@
+# ==============================================================================
+# Kubernetes ResourceQuota for retail-store namespace
+# ==============================================================================
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: retail-store-quota
+  namespace: retail-store
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "20"
+    limits.memory: 40Gi
+    pods: "30"
+    services: "15"
+    services.loadbalancers: "2"

@@ -1,0 +1,23 @@
+# ==============================================================================
+# Kubernetes LimitRange for retail-store namespace
+# ==============================================================================
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: retail-store-limits
+  namespace: retail-store
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: 1000m
+        memory: 1024Mi
+      defaultRequest:
+        cpu: 100m
+        memory: 256Mi
+      max:
+        cpu: 4000m
+        memory: 4096Mi
+      min:
+        cpu: 50m
+        memory: 64Mi

@@ -1,0 +1,186 @@
+# ==============================================================================
+# Zero-Trust Kubernetes Network Policies for Retail Store Microservices
+# ==============================================================================
+
+# 1. Default Deny-All Ingress and Egress for retail-store namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: retail-store
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# 2. Allow CoreDNS egress for all pods in retail-store
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: retail-store
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+# 3. Allow Ingress Controller and External Clients to Storefront UI
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ui-traffic
+  namespace: retail-store
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ui
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    # Allow UI to communicate with backend microservices
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: catalog
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cart
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: checkout
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# 4. Allow Catalog Ingress only from UI
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-catalog-ingress
+  namespace: retail-store
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: catalog
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ui
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# 5. Allow Cart Ingress from UI and Checkout
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-cart-traffic
+  namespace: retail-store
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: cart
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ui
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: checkout
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    # Allow egress for Redis / DynamoDB / datastore connectivity
+    - ports:
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 443
+---
+# 6. Allow Checkout Ingress from UI and Egress to Cart & Orders
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-checkout-traffic
+  namespace: retail-store
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: checkout
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ui
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cart
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: orders
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# 7. Allow Orders Ingress from Checkout and Egress to messaging/datastore
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-orders-traffic
+  namespace: retail-store
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: orders
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: checkout
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - ports:
+        - protocol: TCP
+          port: 5672
+        - protocol: TCP
+          port: 3306
+        - protocol: TCP
+          port: 443
