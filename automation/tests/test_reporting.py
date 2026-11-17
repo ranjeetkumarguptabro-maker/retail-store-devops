@@ -66,6 +66,10 @@ def test_metrics_exporter():
     exporter.record_check("diagnostics", success=False)
     exporter.record_failure("cart", "CrashLoopBackOff")
     exporter.record_rollback("retail-store-cart", status="success")
+    exporter.set_service_health("cart", "retail-store", healthy=False)
+    exporter.set_service_health("ui", "retail-store", healthy=True)
+    exporter.set_pod_restarts("cart", "cart-pod-1", "retail-store", restarts=5)
+    exporter.update_scrape_timestamp()
 
     with exporter.track_duration("diagnose"):
         pass
@@ -76,4 +80,8 @@ def test_metrics_exporter():
     assert 'check_type="diagnostics",status="failure"' in text
     assert 'automation_failures_total{failure_type="CrashLoopBackOff",service="cart"}' in text
     assert 'deployment_rollbacks_total{deployment="retail-store-cart",status="success"}' in text
+    assert 'cluster_service_health_status{namespace="retail-store",service="cart"} 0.0' in text
+    assert 'cluster_service_health_status{namespace="retail-store",service="ui"} 1.0' in text
+    assert 'cluster_pod_restart_count{namespace="retail-store",pod_name="cart-pod-1",service="cart"} 5.0' in text
+    assert "automation_last_scrape_timestamp_seconds" in text
     assert "automation_execution_seconds" in text

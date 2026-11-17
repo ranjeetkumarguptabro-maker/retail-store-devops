@@ -144,3 +144,31 @@ def test_cmd_incident_lifecycle_execution(tmp_path):
         with pytest.raises(SystemExit) as exc_info:
             cmd_incident_lifecycle(args)
         assert exc_info.value.code == 0
+
+
+def test_cmd_export_metrics_once():
+    from automation.ops_cli import cmd_export_metrics
+    parser = build_parser()
+    args = parser.parse_args(["export-metrics", "--port", "9199", "--once", "-n", "retail-store"])
+
+    with patch("automation.ops_cli.get_k8s_clients") as mock_clients, \
+         patch("automation.ops_cli.get_metrics_exporter") as mock_metrics_getter, \
+         patch("automation.ops_cli.PodCollector.collect") as mock_pods:
+
+        mock_clients.return_value = (MagicMock(), MagicMock())
+        mock_exporter = MagicMock()
+        mock_metrics_getter.return_value = mock_exporter
+        mock_pods.return_value = [
+            {
+                "pod_name": "cart-123",
+                "labels": {"app.kubernetes.io/name": "cart"},
+                "restart_count": 0,
+                "status": "Running",
+                "ready": True,
+            }
+        ]
+
+        cmd_export_metrics(args)
+        mock_exporter.start_server.assert_called_once_with(port=9199)
+        mock_exporter.update_scrape_timestamp.assert_called()
+        mock_exporter.record_check.assert_called_with("daemon_cycle", success=True)

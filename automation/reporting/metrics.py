@@ -6,6 +6,7 @@ from typing import Optional
 from prometheus_client import (
     CollectorRegistry,
     Counter,
+    Gauge,
     Histogram,
     generate_latest,
     start_http_server,
@@ -17,7 +18,7 @@ _GLOBAL_EXPORTER: Optional["MetricsExporter"] = None
 
 
 class MetricsExporter:
-    """Manages SRE telemetry counters, histograms, and HTTP scrape endpoints."""
+    """Manages SRE telemetry counters, histograms, gauges, and HTTP scrape endpoints."""
 
     def __init__(self, registry: Optional[CollectorRegistry] = None):
         self.registry = registry or CollectorRegistry()
@@ -50,6 +51,26 @@ class MetricsExporter:
             registry=self.registry,
         )
 
+        self.service_health_status = Gauge(
+            "cluster_service_health_status",
+            "Health status of microservice (1=healthy, 0=degraded/failed)",
+            ["service", "namespace"],
+            registry=self.registry,
+        )
+
+        self.pod_restarts = Gauge(
+            "cluster_pod_restart_count",
+            "Observed restart count of individual pods",
+            ["service", "pod_name", "namespace"],
+            registry=self.registry,
+        )
+
+        self.last_scrape_timestamp = Gauge(
+            "automation_last_scrape_timestamp_seconds",
+            "Unix epoch timestamp of last automated cluster audit cycle",
+            registry=self.registry,
+        )
+
     def record_check(self, check_type: str, success: bool = True):
         status = "success" if success else "failure"
         self.checks_total.labels(check_type=check_type, status=status).inc()
@@ -62,6 +83,16 @@ class MetricsExporter:
 
     def observe_duration(self, operation: str, seconds: float):
         self.execution_seconds.labels(operation=operation).observe(seconds)
+
+    def set_service_health(self, service: str, namespace: str, healthy: bool):
+        val = 1.0 if healthy else 0.0
+        self.service_health_status.labels(service=service, namespace=namespace).set(val)
+
+    def set_pod_restarts(self, service: str, pod_name: str, namespace: str, restarts: int):
+        self.pod_restarts.labels(service=service, pod_name=pod_name, namespace=namespace).set(float(restarts))
+
+    def update_scrape_timestamp(self):
+        self.last_scrape_timestamp.set(time.time())
 
     def track_duration(self, operation: str):
         """Context manager to observe execution duration."""

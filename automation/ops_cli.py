@@ -304,18 +304,67 @@ def cmd_incident_lifecycle(args):
 
 
 def cmd_export_metrics(args):
-    """Starts Prometheus metrics exporter HTTP daemon on specified port."""
+    """Starts Prometheus metrics exporter HTTP daemon on specified port with live background audits."""
     metrics = get_metrics_exporter()
     port = args.port
+    interval = getattr(args, "interval", 15)
+    namespace = getattr(args, "namespace", "retail-store")
+    run_once = getattr(args, "once", False)
+
     print(f"[INFO] Starting Prometheus metrics server on port {port}...")
     metrics.start_server(port=port)
     print(f"[SUCCESS] Scrape endpoint live at: http://localhost:{port}/metrics")
+
+    core_api, _ = get_k8s_clients()
+
+    def run_cycle():
+        with metrics.track_duration("daemon_audit_cycle"):
+            metrics.update_scrape_timestamp()
+            if not core_api:
+                metrics.record_check("daemon_cycle", success=True)
+                return
+
+            try:
+                collector = PodCollector(core_api=core_api, namespace=namespace)
+                detector = PodFailureDetector()
+                pods = collector.collect()
+
+                services = {"ui", "cart", "catalog", "checkout", "orders"}
+                service_failures = {s: False for s in services}
+
+                for p in pods:
+                    svc = p.get("labels", {}).get("app.kubernetes.io/name") or p.get("pod_name", "").split("-")[0]
+                    restarts = p.get("restart_count", 0)
+                    metrics.set_pod_restarts(service=svc, pod_name=p.get("pod_name"), namespace=namespace, restarts=restarts)
+
+                    diag = detector.analyze_pod(p)
+                    if diag.get("status") in ("CRITICAL", "WARNING"):
+                        ftype = diag.get("failure_type", "Unknown")
+                        metrics.record_failure(service=svc, failure_type=ftype)
+                        if svc in service_failures:
+                            service_failures[svc] = True
+
+                for svc, failed in service_failures.items():
+                    metrics.set_service_health(service=svc, namespace=namespace, healthy=not failed)
+
+                metrics.record_check("daemon_cycle", success=True)
+            except Exception as e:
+                logger.error(f"Error during daemon audit cycle: {e}")
+                metrics.record_check("daemon_cycle", success=False)
+
+    run_cycle()
+    if run_once:
+        print("[INFO] Single evaluation cycle complete (--once).")
+        return
+
+    print(f"[INFO] Running continuous cluster monitor every {interval}s (Press Ctrl+C to exit)...")
     try:
         import time
         while True:
-            time.sleep(1)
+            time.sleep(interval)
+            run_cycle()
     except KeyboardInterrupt:
-        print("\n[INFO] Metrics server stopped.")
+        print("\n[INFO] Metrics exporter stopped gracefully.")
         sys.exit(0)
 
 
@@ -444,6 +493,9 @@ def build_parser() -> argparse.ArgumentParser:
     # 6. export-metrics
     p_met = subparsers.add_parser("export-metrics", help="Run background Prometheus metrics HTTP exporter")
     p_met.add_argument("--port", "-p", type=int, default=9102, help="Port to expose Prometheus metrics (default: 9102)")
+    p_met.add_argument("--interval", "-i", type=int, default=15, help="Cluster evaluation poll interval in seconds (default: 15)")
+    p_met.add_argument("--namespace", "-n", default="retail-store", help="Kubernetes namespace to evaluate (default: retail-store)")
+    p_met.add_argument("--once", action="store_true", help="Run a single evaluation cycle and exit (useful for testing and cron)")
 
     # Legacy Subcommands
     subparsers.add_parser("cluster", help="Check cluster connectivity and node readiness (legacy)")
