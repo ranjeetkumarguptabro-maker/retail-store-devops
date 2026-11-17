@@ -110,3 +110,40 @@ kubectl apply -f kubernetes/orders/
 kubectl apply -f kubernetes/ui/
 kubectl apply -f kubernetes/ingress/
 ```
+
+---
+
+## 6. Zero-Trust Security & Resource Boundaries
+
+The cluster enforces defense-in-depth isolation via Kubernetes native security primitives:
+
+```bash
+# Apply Zero-Trust NetworkPolicies (Default deny-all + explicit service allow rules)
+kubectl apply -f kubernetes/security/network-policies.yaml
+
+# Enforce namespace CPU/Memory quotas and container LimitRanges
+kubectl apply -f kubernetes/security/resource-quota.yaml
+kubectl apply -f kubernetes/security/limit-range.yaml
+```
+
+- **NetworkPolicies:** Deny-all by default. Only UI can route traffic to backend catalog/cart/checkout; only Checkout can trigger Orders.
+- **ResourceQuotas:** Hard cap of 10 CPU / 20Gi RAM for requests, 20 CPU / 40Gi RAM for limits, and max 30 pods in `retail-store`.
+- **LimitRanges:** Default container requests (100m CPU, 256Mi RAM) and limits (1000m CPU, 1024Mi RAM) to prevent rogue pods starving worker nodes.
+
+---
+
+## 7. High Availability & Resilience (HPA & PDB)
+
+Every microservice is configured for continuous operation during traffic spikes and maintenance windows:
+
+```bash
+# Apply Horizontal Pod Autoscalers (HPA v2)
+kubectl apply -f kubernetes/resilience/horizontal-pod-autoscalers.yaml
+
+# Apply Pod Disruption Budgets (PDB)
+kubectl apply -f kubernetes/resilience/pod-disruption-budgets.yaml
+```
+
+- **Horizontal Pod Autoscaling:** Dynamically scales pods between 2 and 6 replicas based on 70% CPU and 80% Memory utilization thresholds.
+- **Pod Disruption Budgets:** Configures `minAvailable: 1` per microservice, ensuring zero-downtime rolling node upgrades or EKS AMI migrations.
+
