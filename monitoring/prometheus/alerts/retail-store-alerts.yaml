@@ -1,0 +1,99 @@
+# ==============================================================================
+# Prometheus Alerting Rules: Retail Store Platform Operations & Reliability
+# ==============================================================================
+
+groups:
+  - name: retail-store.service-health
+    rules:
+      - alert: StorefrontServiceDown
+        expr: sum(kube_deployment_status_replicas_available{namespace="retail-store", deployment="retail-store-ui"}) == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: ui
+          team: platform-sre
+        annotations:
+          summary: "Storefront UI is completely unavailable"
+          description: "No available replicas for deployment 'retail-store-ui' in namespace 'retail-store'. Customer traffic is dropping."
+          runbook_url: "docs/FAILURE_TESTING.md#incident-runbook-storefront-outage"
+
+      - alert: MicroserviceCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total{namespace="retail-store"}[5m]) * 300 > 3
+        for: 2m
+        labels:
+          severity: critical
+          team: platform-sre
+        annotations:
+          summary: "Pod in CrashLoopBackOff state: {{ $labels.pod }}"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted more than 3 times in the last 5 minutes."
+          remediation: "Execute 'python3 automation/ops_cli.py incident-lifecycle --service {{ $labels.container }} --auto-approve'"
+
+      - alert: PodOOMKilled
+        expr: increase(kube_pod_container_status_terminated_reason{namespace="retail-store", reason="OOMKilled"}[10m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          team: platform-sre
+        annotations:
+          summary: "Pod terminated by OOM Killer: {{ $labels.pod }}"
+          description: "Container {{ $labels.container }} exceeded its cgroup memory limit and was terminated (exit code 137)."
+          remediation: "Increase resources.limits.memory in kubernetes/{{ $labels.container }}/deployment.yaml"
+
+  - name: retail-store.application-performance
+    rules:
+      - alert: HighHTTP5xxErrorRate
+        expr: (sum(rate(http_server_requests_seconds_count{namespace="retail-store", status=~"5.."}[5m])) / sum(rate(http_server_requests_seconds_count{namespace="retail-store"}[5m]))) * 100 > 1.0
+        for: 3m
+        labels:
+          severity: high
+          team: platform-sre
+        annotations:
+          summary: "HTTP 5xx error rate exceeded 1% threshold"
+          description: "Current error rate is {{ $value | printf \"%.2f\" }}% over the last 5 minutes across retail microservices."
+
+      - alert: HighP95Latency
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{namespace="retail-store"}[5m])) by (le, uri)) > 0.500
+        for: 5m
+        labels:
+          severity: warning
+          team: platform-sre
+        annotations:
+          summary: "p95 latency exceeded 500ms on route: {{ $labels.uri }}"
+          description: "Route {{ $labels.uri }} is responding with p95 latency of {{ $value | printf \"%.3f\" }}s."
+
+  - name: retail-store.cluster-capacity
+    rules:
+      - alert: DeploymentRolloutStalled
+        expr: kube_deployment_status_replicas_unavailable{namespace="retail-store"} > 0
+        for: 10m
+        labels:
+          severity: high
+          team: platform-sre
+        annotations:
+          summary: "Deployment rollout stalled: {{ $labels.deployment }}"
+          description: "Deployment {{ $labels.deployment }} has unavailable replicas for over 10 minutes."
+          remediation: "Run 'python3 automation/ops_cli.py rollback --deployment {{ $labels.deployment }} --dry-run'"
+
+      - alert: NodeMemoryPressureActive
+        expr: kube_node_status_condition{condition="MemoryPressure", status="true"} == 1
+        for: 2m
+        labels:
+          severity: critical
+          team: platform-sre
+        annotations:
+          summary: "Kubernetes node reporting MemoryPressure: {{ $labels.node }}"
+          description: "Node {{ $labels.node }} is under severe memory pressure. Pod evictions imminent."
+
+  - name: retail-store.slo-error-budget
+    rules:
+      - alert: StorefrontSLOBudgetBurnRateHigh
+        expr: (1 - (sum(rate(http_server_requests_seconds_count{status!~"5.."}[1h])) / sum(rate(http_server_requests_seconds_count[1h])))) > (14.4 * 0.01)
+        for: 2m
+        labels:
+          severity: critical
+          tier: slo
+          team: platform-sre
+        annotations:
+          summary: "Storefront 30-Day 99% SLO error budget is burning rapidly"
+          description: "Current 1-hour error burn rate is consuming more than 2% of total 30-day error budget within 1 hour."
+          remediation: "Halt feature rollouts and investigate failing dependencies."

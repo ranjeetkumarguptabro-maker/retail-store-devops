@@ -123,27 +123,31 @@ retail-store-devops/
 │
 ├── .github/                         # Continuous Integration & Delivery
 │   ├── workflows/                   # Active Enterprise CI/CD Pipeline
-│   │   ├── ci.yml                   # Multi-service build & unit tests
-│   │   ├── security.yml             # Trivy container & filesystem scanning
-│   │   └── deploy.yml               # AWS OIDC authentication & EKS deployment
+│   │   ├── ci.yml                   # Multi-service build, unit tests & Terraform validation
+│   │   ├── security.yml             # Secret scanning, SBOM generation, IaC & image CVE scans
+│   │   └── deploy.yml               # AWS OIDC, container vulnerability gate & EKS deployment
 │   └── upstream/                    # Relocated upstream GitHub Actions workflows & actions
 │
-├── monitoring/                      # Observability stack
+├── monitoring/                      # Observability stack & Reliability Engineering
 │   ├── prometheus/values.yaml       # Prometheus Helm scrape configurations
-│   ├── grafana/dashboards/          # Application, Kubernetes & Infra dashboards
+│   ├── prometheus/alerts/           # Alert rules (outages, 5xx rate, p95 latency, SLO burn rate)
+│   ├── grafana/dashboards/          # Application, Kubernetes, Infra & SRE Automation dashboards
+│   ├── SLO.md                       # Service Level Objectives (99% 30-day availability) & Error Budget
 │   └── upstream/                    # Relocated upstream OpenTelemetry collector config
 │
 ├── automation/                      # Python Platform Operations Automation Engine
-│   ├── ops_cli.py                   # Unified SRE CLI (diagnose, monitor, verify, rollback, export)
+│   ├── ops_cli.py                   # Unified SRE CLI (incident-lifecycle, diagnose, monitor, verify)
 │   ├── config/                      # YAML operational thresholds & ConfigManager
 │   ├── collectors/                  # Pod, Node, Resource & Event telemetry ingestion
 │   ├── analyzers/                   # Failure detection, resource anomalies, deployment checks
-│   ├── remediation/                 # RollbackManager (dry-run & confirmation) & RecoveryValidator
+│   ├── remediation/                 # IncidentLifecycleOrchestrator, RollbackManager & RecoveryValidator
 │   ├── reporting/                   # IncidentReportGenerator & Prometheus metrics exporter
 │   ├── requirements.txt             # Engine dependencies (kubernetes, pyyaml, prometheus-client)
-│   └── tests/                       # Complete automated unit test suite (38/38 passing)
+│   └── tests/                       # Complete automated testing suite (44 unit + 3 integration tests)
+│       └── integration/             # Real cluster integration tests against Minikube / kind
 │
 ├── scripts/
+│   ├── run_integration_tests.sh     # Automated kind cluster integration test runner
 │   └── upstream/                    # Relocated upstream manifest and testing scripts
 │
 ├── docs/                            # Comprehensive engineering documentation
@@ -158,6 +162,7 @@ retail-store-devops/
 │   ├── GRAFANA.md                   # Stage 8: Grafana operational dashboards
 │   ├── PYTHON_AUTOMATION.md         # Stage 9: Python operations automation guide
 │   ├── FAILURE_TESTING.md           # Stage 10: Chaos engineering & failure experiments
+│   ├── IAM_LEAST_PRIVILEGE.md       # Least-privilege IAM security model & OIDC matrix
 │   ├── REPOSITORY_STRUCTURE_AUDIT.md# Upstream vs Custom Architecture Audit
 │   ├── RESTRUCTURE_REPORT.md        # Data and Application Separation Migration Report
 │   └── upstream-app/                # Relocated upstream application docs & diagrams
