@@ -104,6 +104,9 @@ retail-store-devops/
 ├── kubernetes/                      # Production Kubernetes Manifests (Vanilla Declarative)
 │   ├── namespace.yaml               # Dedicated 'retail-store' namespace
 │   ├── config/                      # Decoupled ConfigMaps and Secret templates
+│   ├── security/                    # Zero-Trust NetworkPolicies, ResourceQuotas, LimitRanges
+│   ├── resilience/                  # HorizontalPodAutoscalers (HPA v2) & PodDisruptionBudgets (PDB)
+│   ├── automation/                  # In-cluster SRE engine daemon, RBAC & ServiceMonitor
 │   ├── ui/                          # Frontend Deployment, Service, HPA
 │   ├── catalog/                     # Catalog Go API Deployment & Service
 │   ├── cart/                        # Cart Java API Deployment & Service
@@ -143,7 +146,7 @@ retail-store-devops/
 │   ├── remediation/                 # IncidentLifecycleOrchestrator, RollbackManager & RecoveryValidator
 │   ├── reporting/                   # IncidentReportGenerator & Prometheus metrics exporter
 │   ├── requirements.txt             # Engine dependencies (kubernetes, pyyaml, prometheus-client)
-│   └── tests/                       # Complete automated testing suite (44 unit + 3 integration tests)
+│   └── tests/                       # Complete automated testing suite (45 unit + 3 integration tests)
 │       └── integration/             # Real cluster integration tests against Minikube / kind
 │
 ├── scripts/
@@ -162,6 +165,7 @@ retail-store-devops/
 │   ├── GRAFANA.md                   # Stage 8: Grafana operational dashboards
 │   ├── PYTHON_AUTOMATION.md         # Stage 9: Python operations automation guide
 │   ├── FAILURE_TESTING.md           # Stage 10: Chaos engineering & failure experiments
+│   ├── CHAOS_RECOVERY_RUNBOOK.md    # SRE Disaster recovery runbook & chaos injection scenarios
 │   ├── IAM_LEAST_PRIVILEGE.md       # Least-privilege IAM security model & OIDC matrix
 │   ├── REPOSITORY_STRUCTURE_AUDIT.md# Upstream vs Custom Architecture Audit
 │   ├── RESTRUCTURE_REPORT.md        # Data and Application Separation Migration Report
@@ -191,8 +195,9 @@ curl -s http://localhost:8888/actuator/health
 curl -s http://localhost:8888/actuator/prometheus
 ```
 
-### 3. Deploy to Local Kubernetes (Minikube):
+### 3. Deploy to Kubernetes (Minikube / EKS):
 ```bash
+# Core Services & Namespace
 kubectl apply -f kubernetes/namespace.yaml
 kubectl apply -f kubernetes/config/
 kubectl apply -f kubernetes/catalog/
@@ -200,16 +205,31 @@ kubectl apply -f kubernetes/cart/
 kubectl apply -f kubernetes/checkout/
 kubectl apply -f kubernetes/orders/
 kubectl apply -f kubernetes/ui/
+
+# Zero-Trust Security & Autoscaling Policies
+kubectl apply -f kubernetes/security/
+kubectl apply -f kubernetes/resilience/
+
+# In-Cluster SRE Automation Daemon
+kubectl apply -f kubernetes/automation/
 ```
 
-### 4. Run the Python Platform Operations Engine:
+### 4. Run the Python SRE Operations Engine:
 ```bash
-python3 automation/generate_report.py retail-store
+# Automated incident lifecycle remediation (Detect -> Analyze -> Rollback -> Verify -> Report)
+python3 automation/ops_cli.py incident-lifecycle --service cart --auto-approve
+
+# Continuous cluster monitoring and Prometheus metrics HTTP exporter daemon
+python3 automation/ops_cli.py export-metrics --port 9102 --interval 15
 ```
 
-### 5. Run Automation Unit Tests:
+### 5. Run Automation Unit & Integration Tests:
 ```bash
-python3 -m unittest discover -s automation/tests -v
+# Run 45 unit tests (100% mocked, runs in 0.19s)
+pytest automation/tests -m "not integration"
+
+# Run live Kubernetes cluster integration tests against Minikube / kind
+./scripts/run_integration_tests.sh
 ```
 
 ---
