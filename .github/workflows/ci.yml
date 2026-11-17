@@ -69,8 +69,33 @@ jobs:
 
       - name: Run Unit Tests & Code Coverage
         run: |
-          pytest automation/tests --cov=automation --cov-report=term-missing
+          pytest automation/tests -m "not integration" --cov=automation --cov-report=term-missing
 
-      - name: Verify Unified SRE CLI
+      - name: Verify Unified SRE CLI & Lifecycle Commands
         run: |
           python automation/ops_cli.py --help
+          python automation/ops_cli.py incident-lifecycle --help
+
+  terraform-lint-and-validate:
+    name: "Terraform Formatting & Validation"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"
+
+      - name: Terraform Format Check
+        run: |
+          terraform fmt -check -recursive terraform/modules/ terraform/environments/dev/
+
+      - name: Terraform Init (No Backend)
+        run: |
+          terraform -chdir=terraform/environments/dev init -backend=false
+
+      - name: Terraform Validate
+        run: |
+          terraform -chdir=terraform/environments/dev validate

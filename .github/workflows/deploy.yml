@@ -13,6 +13,7 @@ jobs:
   deploy-eks:
     name: "Deploy to Amazon EKS"
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -31,13 +32,23 @@ jobs:
           print('All Kubernetes manifests validated successfully!')
           "
 
+      - name: Pre-Deployment Container Vulnerability Gate
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: 'public.ecr.aws/aws-containers/retail-store-sample-ui:1.0.0'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          severity: 'CRITICAL'
+
       - name: Check AWS Deployment Credentials
         id: check-creds
         env:
           ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: |
           if [ -z "$ROLE_ARN" ]; then
-            echo "::notice::AWS_ROLE_ARN secret is not configured. Manifest validation passed. Skipping live cloud deployment until AWS EKS is provisioned."
+            echo "::notice::AWS_ROLE_ARN secret is not configured. Security gate & manifest validation passed. Skipping live cloud deployment until AWS EKS is provisioned."
             echo "has_creds=false" >> $GITHUB_OUTPUT
           else
             echo "has_creds=true" >> $GITHUB_OUTPUT

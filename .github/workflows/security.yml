@@ -1,4 +1,4 @@
-name: "Security Scan (Trivy)"
+name: "Security Scan & Compliance"
 
 on:
   push:
@@ -8,14 +8,24 @@ on:
   workflow_dispatch:
 
 jobs:
-  trivy-scan:
-    name: "Trivy Security & Vulnerability Scan"
+  security-and-sbom:
+    name: "Trivy Security, Secrets & SBOM Scan"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Run Trivy Configuration & IaC Scanner
+      - name: Secret & Credential Scanning
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scanners: 'secret'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Run Trivy IaC & Configuration Scanner
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'config'
@@ -23,6 +33,21 @@ jobs:
           format: 'table'
           exit-code: '0'
           severity: 'CRITICAL,HIGH'
+
+      - name: Generate Software Bill of Materials (SBOM) - Filesystem
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'cyclonedx'
+          output: 'sbom-filesystem.cdx.json'
+
+      - name: Upload SBOM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: software-bill-of-materials
+          path: sbom-filesystem.cdx.json
+          retention-days: 14
 
       - name: Scan Storefront UI Container Image
         uses: aquasecurity/trivy-action@master
