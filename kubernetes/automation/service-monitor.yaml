@@ -1,0 +1,21 @@
+# ==============================================================================
+# Prometheus Operator ServiceMonitor for SRE Automation Engine
+# ==============================================================================
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ops-automation-monitor
+  namespace: retail-store
+  labels:
+    app.kubernetes.io/name: ops-automation
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ops-automation
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s

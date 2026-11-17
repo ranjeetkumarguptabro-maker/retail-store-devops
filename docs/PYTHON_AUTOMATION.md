@@ -159,3 +159,30 @@ The engine is integrated into GitHub Actions ([`.github/workflows/ci.yml`](../.g
 1. **Ruff Linting**: `ruff check automation/`
 2. **Unit Testing & Coverage**: `pytest automation/tests -m "not integration" --cov=automation --cov-report=term-missing`
 3. **CLI Syntax Verification**: `python automation/ops_cli.py --help`
+
+---
+
+## 6. In-Cluster Daemon Deployment & Prometheus Scraping
+
+The engine can run directly inside Amazon EKS as a self-healing background monitor:
+
+```bash
+# 1. Apply RBAC permissions (least-privilege ClusterRole for pod/deployment inspection & rollback)
+kubectl apply -f kubernetes/automation/rbac.yaml
+
+# 2. Deploy daemon and metrics service
+kubectl apply -f kubernetes/automation/deployment.yaml
+kubectl apply -f kubernetes/automation/service.yaml
+
+# 3. Optional: Deploy Prometheus Operator ServiceMonitor
+kubectl apply -f kubernetes/automation/service-monitor.yaml
+```
+
+The daemon runs `ops_cli.py export-metrics --interval 15`, continuously updating Prometheus metrics:
+- `cluster_service_health_status{service="<svc>", namespace="retail-store"}` (1.0 healthy, 0.0 degraded)
+- `cluster_pod_restart_count{service="<svc>", pod_name="<pod>"}`
+- `automation_checks_total{check_type="daemon_cycle", status="success"}`
+- `automation_failures_total{service="<svc>", failure_type="<type>"}`
+- `deployment_rollbacks_total{deployment="<dep>", status="<status>"}`
+- `automation_execution_seconds{operation="daemon_audit_cycle"}`
+

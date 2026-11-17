@@ -1,0 +1,21 @@
+# ==============================================================================
+# Service for Python SRE Automation Exporter
+# ==============================================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ops-automation-metrics
+  namespace: retail-store
+  labels:
+    app.kubernetes.io/name: ops-automation
+    app.kubernetes.io/component: sre-engine
+spec:
+  type: ClusterIP
+  ports:
+    - name: metrics
+      port: 9102
+      targetPort: 9102
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: ops-automation
