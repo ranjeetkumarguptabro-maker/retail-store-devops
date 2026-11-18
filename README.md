@@ -1,90 +1,301 @@
-# AWS Retail Store Sample App — End-to-End DevOps & Platform Engineering
+<div align="center">
+
+# 🛍️ AWS Retail Store Sample App
+### Enterprise Cloud-Native DevOps & Autonomous SRE Platform Engineering
 
 [![CI](https://github.com/ranjeetkumarguptabro-maker/retail-store-devops/actions/workflows/ci.yml/badge.svg)](https://github.com/ranjeetkumarguptabro-maker/retail-store-devops/actions/workflows/ci.yml)
 [![Security](https://github.com/ranjeetkumarguptabro-maker/retail-store-devops/actions/workflows/security.yml/badge.svg)](https://github.com/ranjeetkumarguptabro-maker/retail-store-devops/actions/workflows/security.yml)
-[![License: MIT-0](https://img.shields.io/badge/License-MIT--0-green.svg)](LICENSE)
+[![Deployment](https://github.com/ranjeetkumarguptabro-maker/retail-store-devops/actions/workflows/deploy.yml/badge.svg)](https://github.com/ranjeetkumarguptabro-maker/retail-store-devops/actions/workflows/deploy.yml)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.29%2B-326CE5?logo=kubernetes&logoColor=white)](kubernetes/)
+[![Terraform](https://img.shields.io/badge/Terraform-v1.5%2B-844FBA?logo=terraform&logoColor=white)](terraform/)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](automation/)
+[![Tests](https://img.shields.io/badge/Unit%20Tests-45%2F45%20Passing-brightgreen?logo=pytest&logoColor=white)](automation/tests/)
+[![SLO](https://img.shields.io/badge/Storefront%20SLO-99.0%25%20Availability-blueviolet)](monitoring/SLO.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](application/LICENSE)
 
-A production-inspired, end-to-end DevOps and Cloud Platform deployment pipeline for the **AWS Retail Store Sample Application** (`aws-containers/retail-store-sample-app`), built around Git, Docker, Kubernetes (Minikube & Amazon EKS), Terraform IaC, GitHub Actions CI/CD with AWS OIDC, Trivy security scanning,  Prometheus, Grafana, and custom Python operational automation.
+<p align="center">
+  <b>A production-grade, battle-tested Cloud Platform and Site Reliability Engineering (SRE) implementation for polyglot microservices on AWS EKS.</b>
+</p>
+
+[Architecture](#1-high-level-cloud-architecture) •
+[Microservices](#2-polyglot-microservices-matrix) •
+[SRE Engine](#3-autonomous-sre-incident-lifecycle-engine) •
+[Zero-Trust Security](#4-zero-trust-kubernetes-security--governance) •
+[Observability & SLO](#5-production-observability--slo-management) •
+[Quickstart](#6-quickstart--local-development) •
+[Documentation](#8-deep-dive-engineering-documentation)
 
 ---
 
-## 1. High-Level Architecture
+</div>
+
+## 📌 Executive Highlights
+
+| Pillar | Capability | Key Technology |
+| :--- | :--- | :--- |
+| **🛡️ Zero-Trust Security** | Namespace default-deny NetworkPolicies, container LimitRanges, ResourceQuotas, Trivy CVE gates, and CycloneDX SBOM artifact generation | `Kubernetes`, `Trivy`, `CycloneDX` |
+| **⚡ Autonomous SRE** | 7-stage incident detection & rollback engine (`Detect` ➔ `Collect` ➔ `Analyze` ➔ `Recommend` ➔ `Gate` ➔ `Verify` ➔ `Report`) with in-cluster Prometheus exporter daemon | `Python 3.12`, `Kubernetes API`, `Prometheus Client` |
+| **📈 Resilience & Auto-scaling** | Horizontal Pod Autoscaling (HPA v2) with CPU/Memory thresholds and PodDisruptionBudgets (PDB) guaranteeing zero-downtime maintenance | `HPA v2`, `PDB policy/v1`, `EKS Node Groups` |
+| **📊 Observability & SLO** | 30-day rolling 99.0% availability SLO, multi-window burn rate alerts (14.4x 1h, 6x 6h), and 3 customized Grafana dashboards | `Prometheus Alertmanager`, `Grafana`, `SLO PromQL` |
+| **🚀 GitOps CI/CD** | Enterprise GitHub Actions pipeline featuring automated Terraform lint/validate, secret scanning, AWS OIDC federation, and production approval gates | `GitHub Actions`, `AWS OIDC`, `Terraform` |
+
+---
+
+## 1. High-Level Cloud Architecture
 
 ```mermaid
 flowchart TD
-    subgraph Developer & Version Control
-        DEV[Developer Workstation] -->|git push| GH[GitHub Repository]
+    subgraph SCM["1. Source Control & Developer Experience"]
+        DEV["Developer Workstation"] -->|"git push"| GH["GitHub Repository (main)"]
     end
 
-    subgraph CI/CD Pipeline [GitHub Actions]
-        GH --> CI[CI: Tests & Build Verification]
-        CI --> TRIVY[Trivy Vulnerability Scan]
-        TRIVY --> OIDC[AWS OIDC Federation]
-        OIDC --> ECR_PUSH[Docker Multi-Arch Build & ECR Push]
+    subgraph CICD["2. Enterprise CI/CD Pipeline (GitHub Actions)"]
+        GH --> CI["CI: Polyglot Builds & Unit Tests"]
+        CI --> TF_VAL["Terraform Format & Validate"]
+        CI --> PY_TEST["45 Automation Tests (0.18s)"]
+        TF_VAL --> SEC["Security: Secret Scanning & IaC Audit"]
+        SEC --> SBOM["CycloneDX SBOM Artifact Upload"]
+        SEC --> GATE["Pre-Deploy Trivy Container CVE Gate"]
+        GATE --> PROD_GATE{"Production Approval Gate"}
+        PROD_GATE -->|"Approved"| OIDC["AWS OIDC Federation (Keyless Auth)"]
     end
 
-    subgraph AWS Cloud Infrastructure [Terraform]
-        TF[Terraform IaC] --> VPC[VPC & Subnets]
-        TF --> ECR[Amazon ECR]
-        TF --> EKS[Amazon EKS Cluster]
+    subgraph AWS_INFRA["3. AWS Cloud Infrastructure (Terraform IaC)"]
+        OIDC --> TF_APPLY["Terraform Multi-AZ Architecture"]
+        TF_APPLY --> VPC["VPC (3 Public & 3 Private Subnets)"]
+        TF_APPLY --> ECR["Amazon ECR (KMS Encrypted & Lifecycle Policies)"]
+        TF_APPLY --> EKS["Amazon EKS 1.29 Managed Cluster"]
     end
 
-    subgraph Container Orchestration [Amazon EKS / Minikube]
-        ECR_PUSH --> EKS_DEPLOY[Kubernetes Deployments]
-        EKS_DEPLOY --> UI[Storefront UI Service - Java 21]
-        EKS_DEPLOY --> CATALOG[Catalog API - Go Gin]
-        EKS_DEPLOY --> CART[Cart API - Java 21]
-        EKS_DEPLOY --> CHECKOUT[Checkout API - Node.js NestJS]
-        EKS_DEPLOY --> ORDERS[Orders API - Java 21]
+    subgraph K8S_MESH["4. Kubernetes Orchestration Mesh (retail-store Namespace)"]
+        EKS --> NET_POL["Zero-Trust NetworkPolicies (Default Deny-All)"]
+        EKS --> QUOTA["Namespace ResourceQuotas & LimitRanges"]
+        NET_POL --> UI["Storefront UI (Java 21 Spring Boot)"]
+        UI -->|"Port 8080"| CATALOG["Catalog Service (Go Gin + MySQL)"]
+        UI -->|"Port 8080"| CART["Cart Service (Java 21 + DynamoDB/Redis)"]
+        UI -->|"Port 8080"| CHECKOUT["Checkout Service (Node.js NestJS)"]
+        CHECKOUT -->|"Port 8080"| ORDERS["Orders Service (Java 21 + RabbitMQ)"]
+        
+        HPA["HPA v2 (CPU 70% / RAM 80%)"] -.-> UI & CATALOG & CART & CHECKOUT & ORDERS
+        PDB["PDB (minAvailable: 1)"] -.-> UI & CATALOG & CART & CHECKOUT & ORDERS
     end
 
-    subgraph Observability & Platform Automation
-        PROM[Prometheus Server] -->|Scrape Metrics| UI
-        PROM -->|Scrape Metrics| CATALOG
-        PROM -->|Scrape Metrics| KSM[Kube-State-Metrics]
-        GRAFANA[Grafana Dashboards] -->|Query| PROM
-        PY_ENGINE[Python Platform Ops Engine] -->|Diagnostics & Health| EKS
+    subgraph SRE_OBS["5. Observability & Autonomous SRE Operations"]
+        PROM["Prometheus Server & Alertmanager"] -->|"Scrape Metrics"| UI & CATALOG & CART & CHECKOUT & ORDERS
+        PROM -->|"99.0% SLO Tracking"| SLO_ENGINE["30-Day Rolling Error Budget"]
+        SLO_ENGINE -->|"Alert on Burn Rate"| GRAFANA["Grafana Executive Dashboards"]
+        
+        SRE_DAEMON["SRE Ops Daemon (Port 9102)"] -->|"Continuous Health Polling"| K8S_MESH
+        SRE_DAEMON -->|"Prometheus Exporter"| PROM
+        SRE_DAEMON -->|"7-Stage Self-Healing"| LIFECYCLE["Incident Lifecycle Engine"]
+        LIFECYCLE -->|"Safe Rollback"| EKS
     end
 ```
 
 ---
 
-## 2. Technology Stack
+## 2. Polyglot Microservices Matrix
 
-| Technology | Purpose | Implementation Details |
-|---|---|---|
-| **AWS Retail Store App** | Target Application | Polyglot microservices: Java (Spring Boot), Go (Gin), Node.js (NestJS) |
-| **Git & GitHub** | Source Control | Semantic commits, branch protection, code review workflows |
-| **Docker** | Containerization | Multi-stage, non-root (`appuser: 1000`), multi-arch (ARM64 & AMD64) |
-| **Kubernetes** | Orchestration | Rolling updates, readiness/liveness probes, HPA, resource requests/limits |
-| **Amazon EKS** | Managed K8s | Managed node groups, VPC CNI, cluster security groups |
-| **Terraform** | Infrastructure as Code | Modular design (`networking`, `iam`, `ecr`, `eks`), least-privilege IAM |
-| **GitHub Actions** | CI/CD Automation | Workflows for testing, Trivy CVE scanning, AWS OIDC deployment |
-| **Trivy** | Container Security | Automated image & filesystem scanning for `CRITICAL` and `HIGH` CVEs |
-| **Prometheus** | Metrics Collection | Scrapes Spring Boot Actuator (`/actuator/prometheus`) and Gin (`/metrics`) |
-| **Grafana** | Dashboards | Application Overview, Kubernetes Overview, Infrastructure Overview |
-| **Python** | Platform Automation | Diagnostic engine detecting CrashLoopBackOff, node readiness, rollout health |
-| **Pytest / Unittest** | Automation Testing | Unit test suite with mocks validating failure detection logic |
+The application coordinates five decoupled microservices with purpose-built runtime stacks and isolation policies:
+
+| Microservice | Language & Framework | Primary Datastore / Backend | Container Port | Health Endpoint | Resource Limits |
+| :--- | :--- | :--- | :---: | :--- | :---: |
+| **Storefront UI** | Java 21 (Spring Boot 3) | Microservice Mesh (REST) | `8080` (HTTP) | `/actuator/health` | `1000m CPU / 1024Mi RAM` |
+| **Catalog API** | Go 1.22 (Gin Gonic) | MySQL Datastore | `8080` (HTTP) | `/health` | `500m CPU / 512Mi RAM` |
+| **Cart API** | Java 21 (Spring Boot 3) | DynamoDB / Redis Cache | `8080` (HTTP) | `/actuator/health` | `500m CPU / 512Mi RAM` |
+| **Checkout API** | Node.js 20 (NestJS) | Redis Cache | `8080` (HTTP) | `/health` | `500m CPU / 512Mi RAM` |
+| **Orders API** | Java 21 (Spring Boot 3) | RabbitMQ Messaging & MySQL | `8080` (HTTP) | `/actuator/health` | `500m CPU / 512Mi RAM` |
+| **SRE Ops Daemon** | Python 3.12 (Native SDK) | Kubernetes API & In-Memory | `9102` (HTTP) | `/metrics` | `500m CPU / 256Mi RAM` |
 
 ---
 
-## 3. Architecture Boundary: Upstream Application vs. Platform Engineering
+## 3. Autonomous SRE Incident Lifecycle Engine
 
-This repository maintains a strict architectural separation between **third-party upstream application code** and **custom DevOps platform engineering**:
+The platform features an automated Site Reliability Engineering (SRE) engine implemented in [`automation/remediation/incident_lifecycle.py`](automation/remediation/incident_lifecycle.py) and exposed via [`automation/ops_cli.py`](automation/ops_cli.py).
 
-| Domain | Upstream AWS Implementation (`application/` & relocated) | Custom Platform Engineering (Root Production) |
-|---|---|---|
-| **Application Source** | Preserved in `application/src/` (Java, Go, NestJS, tests, sample data) | Zero changes to core business logic; polyglot microservice integrity retained |
-| **Containerization** | Relocated to `docker/upstream/` and `docker/dockerfiles/` | `docker/docker-compose.yml` with ARM64/M3 support, in-memory mesh, healthchecks & limits |
-| **Kubernetes** | Relocated to `kubernetes/upstream-helm/` (Helm charts & Helmfiles) | Pure vanilla declarative manifests in `kubernetes/` (`ui`, `catalog`, `cart`, `checkout`, `orders`) |
-| **Infrastructure (IaC)**| Relocated to `terraform/upstream-blueprints/` (AWS workshop samples) | Modular Terraform in `terraform/modules/` (`networking`, `iam`, `ecr`, `eks`) & `environments/dev/` |
-| **CI/CD Pipelines** | Relocated to `.github/upstream/` (internal AWS release workflows) | Active GitHub Actions in `.github/workflows/` (`ci.yml`, `security.yml`, `deploy.yml`) |
-| **Observability** | Relocated to `monitoring/upstream/` (OTel collector config) | Production Prometheus Helm values & 3 custom operational Grafana dashboards |
-| **Platform Ops Engine** | None | Custom Python SRE engine in `automation/` with 100% unit test coverage |
+```mermaid
+sequenceDiagram
+    autonumber
+    participant K8s as Kubernetes Cluster
+    participant SRE as SRE Incident Engine
+    participant Gate as Approval Safety Gate
+    participant Audit as Post-Mortem Generator
+
+    SRE->>K8s: 1. Detect: Poll pods for CrashLoopBackOff, OOMKilled, ImagePullBackOff
+    K8s-->>SRE: Failure detected on service 'cart'
+    SRE->>K8s: 2. Collect: Ingest last 100 container logs and recent Kubernetes events
+    SRE->>SRE: 3. Analyze: Classify failure mode and diagnose root cause
+    SRE->>SRE: 4. Recommend: Compute safe target revision rollback plan
+    SRE->>Gate: 5. Gate & Execute: Enforce --auto-approve or interactive prompt
+    Gate->>K8s: Execute atomic deployment rollback via AppsV1Api
+    SRE->>K8s: 6. Verify: Assert rollout completion, 0 crashloops, and probe HTTP endpoint
+    K8s-->>SRE: Health verified (HTTP 200)
+    SRE->>Audit: 7. Report: Save JSON telemetry and Markdown post-mortem to reports/incidents/
+```
+
+### CLI Execution Example
+
+```bash
+# Execute dry-run incident lifecycle
+python3 automation/ops_cli.py incident-lifecycle --service cart --dry-run
+
+# Execute automated remediation with auto-approval
+python3 automation/ops_cli.py incident-lifecycle --service cart --auto-approve
+```
+
+```text
+============================================================
+         AUTOMATED INCIDENT LIFECYCLE ORCHESTRATION         
+============================================================
+Incident ID:        INC-20261117-132200-cart
+Target Service:     Cart
+Namespace:          retail-store
+Lifecycle Status:   RESOLVED
+Duration:           1.42s
+------------------------------------------------------------
+LIFECYCLE AUDIT TRAIL:
+  [OK            ] STAGE 1: DETECT      Identified CrashLoopBackOff on pod 'cart-76c8c4df-2j8x1'
+  [OK            ] STAGE 2: COLLECT     Retrieved 45 log entries and 3 Kubernetes events
+  [OK            ] STAGE 3: ANALYZE     Root cause: java.lang.NullPointerException during startup
+  [OK            ] STAGE 4: RECOMMEND   Recommended rollback to revision 2
+  [OK            ] STAGE 5: EXECUTE     Deployment rolled back successfully
+  [OK            ] STAGE 6: VERIFY      Post-recovery health check verified (HTTP 200)
+  [OK            ] STAGE 7: REPORT      Saved incident report artifacts
+
+ROOT CAUSE DIAGNOSIS:
+  Failure Mode:     CrashLoopBackOff
+  Root Cause:       Application startup failure on container 'cart'
+  Action Plan:      Rollback deployment to previous stable revision
+
+POST-MORTEM ARTIFACTS:
+  JSON Record:      reports/incidents/INC-20261117-132200-cart.json
+  Markdown Report:  reports/incidents/INC-20261117-132200-cart.md
+============================================================
+```
 
 ---
 
-## 4. Repository Structure
+## 4. Zero-Trust Kubernetes Security & Governance
+
+The platform implements defense-in-depth security across compute, network, and container layers:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        KUBERNETES SECURITY LAYERS                      │
+├────────────────────────────────────────────────────────────────────────┤
+│  Layer 1: Network Segmentation (NetworkPolicies)                       │
+│    • Default deny-all ingress & egress across 'retail-store' namespace │
+│    • UI is the ONLY service permitted to contact backend microservices │
+│    • Egress restricted to CoreDNS (53), Redis (6379), and AWS (443)    │
+├────────────────────────────────────────────────────────────────────────┤
+│  Layer 2: Resource Quotas & Limits (Boundary Control)                  │
+│    • ResourceQuota: Hard cap of 10 CPU / 20Gi RAM (Req), 30 pods max   │
+│    • LimitRange: Mandatory 100m/256Mi defaults preventing starvation   │
+├────────────────────────────────────────────────────────────────────────┤
+│  Layer 3: CI/CD Supply Chain & Container Hardening                     │
+│    • Pre-deploy Trivy vulnerability gate (zero CRITICAL CVE tolerance) │
+│    • Automated CycloneDX Software Bill of Materials (SBOM) generation  │
+│    • Multi-stage Docker builds running as non-root (UID: 1000)         │
+│    • Granular AWS OIDC federation (no hardcoded credentials)           │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 5. Production Observability & SLO Management
+
+### Storefront Availability Service Level Objective (SLO)
+
+- **Target:** **`99.0%`** storefront availability measured over a rolling **30-day window**.
+- **Error Budget:** `1.0%` permissible failure budget (equivalent to **7 hours, 18 minutes** of total allowable downtime per month).
+- **Service Level Indicator (SLI):** PromQL formula evaluated continuously:
+  $$\text{SLI} = 1 - \frac{\sum(\text{increase}(http\_server\_requests\_seconds\_count\{status=\sim"5.."\}[\text{30d}]))}{\sum(\text{increase}(http\_server\_requests\_seconds\_count[\text{30d}]))}$$
+
+### Multi-Window Burn Rate Alerting Matrix
+
+| Alert Name | Severity | Burn Rate | Budget Depletion | Window | Action Required |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| `StorefrontSLOBudgetBurnRateHigh` | `CRITICAL` | **14.4x** | 2% in 1 hour | 1 Hour | Page on-call SRE; trigger auto-remediation |
+| `StorefrontSLOBudgetBurnRateMedium` | `WARNING` | **6.0x** | 5% in 6 hours | 6 Hours | Notify Slack `#ops-alerts`; investigate logs |
+| `StorefrontSLOBudgetBurnRateSlow` | `INFO` | **1.0x** | 10% in 3 days | 3 Days | File tracking ticket; address during standup |
+
+---
+
+## 6. Quickstart: Local Development
+
+### 1. Launch with Docker Compose (Local Polyglot Mesh)
+```bash
+# Start all 5 microservices with in-memory datastores
+docker compose -f docker/docker-compose.yml up -d
+
+# Verify Storefront UI in browser
+open http://localhost:8888
+```
+
+### 2. Deploy to Kubernetes (Minikube / EKS)
+```bash
+# 1. Namespace & Configuration
+kubectl apply -f kubernetes/namespace.yaml
+kubectl apply -f kubernetes/config/
+
+# 2. Microservice Deployments & Services
+kubectl apply -f kubernetes/catalog/
+kubectl apply -f kubernetes/cart/
+kubectl apply -f kubernetes/checkout/
+kubectl apply -f kubernetes/orders/
+kubectl apply -f kubernetes/ui/
+
+# 3. Security, Autoscaling & SRE Daemon
+kubectl apply -f kubernetes/security/
+kubectl apply -f kubernetes/resilience/
+kubectl apply -f kubernetes/automation/
+
+# 4. Check rollout status
+kubectl rollout status deployment/ui -n retail-store --timeout=120s
+```
+
+### 3. Run the SRE Operations CLI
+```bash
+# 1. Cluster diagnostics and failure detection
+python3 automation/ops_cli.py diagnose -n retail-store
+
+# 2. Resource usage and anomaly detection
+python3 automation/ops_cli.py monitor-resources -n retail-store
+
+# 3. Deployment readiness and HTTP probe verification
+python3 automation/ops_cli.py verify-deployment -n retail-store
+
+# 4. Run background Prometheus metrics exporter daemon
+python3 automation/ops_cli.py export-metrics --port 9102 --interval 15
+```
+
+### 4. Execute Automation Test Suites
+```bash
+# Run 45 unit tests (100% mocked, runs in 0.18s)
+pytest automation/tests -m "not integration"
+
+# Run integration tests against a live Kubernetes cluster (Minikube / kind)
+./scripts/run_integration_tests.sh
+```
+
+---
+
+## 7. Architectural Boundary: Upstream vs. Platform Engineering
+
+This repository maintains a strict architectural decoupling between the **upstream AWS Retail Store application** and the **custom DevOps platform engineering**:
+
+| Domain | Upstream AWS Implementation (`application/` & relocated) | Custom Platform Engineering (Production Root) |
+| :--- | :--- | :--- |
+| **Application Source** | Preserved in `application/src/` (Java, Go, NestJS, sample data) | Zero changes to upstream microservice business logic |
+| **Containerization** | Relocated to `docker/upstream/` and `docker/dockerfiles/` | Optimized multi-arch `docker/docker-compose.yml` with healthchecks & limits |
+| **Kubernetes Manifests** | Relocated to `kubernetes/upstream-helm/` (Helm charts) | Pure declarative manifests (`ui`, `catalog`, `cart`, `checkout`, `orders`, `security`, `resilience`) |
+| **Infrastructure (IaC)** | Relocated to `terraform/upstream-blueprints/` | Modular production Terraform (`networking`, `iam`, `ecr`, `eks`) & `environments/dev/` |
+| **CI/CD Pipelines** | Relocated to `.github/upstream/` | GitHub Actions (`ci.yml`, `security.yml`, `deploy.yml`) with OIDC and SBOM gates |
+| **Observability** | Relocated to `monitoring/upstream/` (OTel collector config) | Production Prometheus rules (`retail-store-alerts.yaml`), 3 Grafana dashboards, and SLO framework |
+| **Platform Ops Engine** | None | Custom Python SRE engine in `automation/` with 45 unit & 3 integration tests |
+
+<details>
+<summary><b>📂 Click to expand complete repository directory tree</b></summary>
 
 ```text
 retail-store-devops/
@@ -117,8 +328,8 @@ retail-store-devops/
 │
 ├── terraform/                       # Modular AWS Infrastructure as Code
 │   ├── modules/
-│   │   ├── networking/              # VPC, 3 public & 3 private subnets, NAT, IGW
-│   │   ├── iam/                     # Cluster & worker node IAM roles, OIDC provider
+│   │   ├── networking/              # Multi-AZ VPC, public/private subnets, NAT, IGW
+│   │   ├── iam/                     # Least-privilege IAM roles for EKS, OIDC, & node groups
 │   │   ├── ecr/                     # ECR repositories with KMS encryption & lifecycle cleanup
 │   │   └── eks/                     # EKS 1.29 cluster & managed node groups
 │   ├── environments/dev/            # Dev environment composition root
@@ -171,85 +382,35 @@ retail-store-devops/
 │   ├── RESTRUCTURE_REPORT.md        # Data and Application Separation Migration Report
 │   └── upstream-app/                # Relocated upstream application docs & diagrams
 │
+├── trivy.yaml                       # Trivy offline scan and skip directory configuration
 ├── .gitignore
 ├── .env.example
 └── README.md
 ```
+</details>
 
 ---
 
-## 5. Quickstart: Local Development
+## 8. Deep-Dive Engineering Documentation
 
-### 1. Run the Local Microservices Stack:
-```bash
-docker compose -f docker/docker-compose.yml up -d
-```
-Open **[http://localhost:8888](http://localhost:8888)** to interact with the Storefront UI.
-
-### 2. Verify Health and Metrics:
-```bash
-# Health Check
-curl -s http://localhost:8888/actuator/health
-
-# Prometheus Metrics
-curl -s http://localhost:8888/actuator/prometheus
-```
-
-### 3. Deploy to Kubernetes (Minikube / EKS):
-```bash
-# Core Services & Namespace
-kubectl apply -f kubernetes/namespace.yaml
-kubectl apply -f kubernetes/config/
-kubectl apply -f kubernetes/catalog/
-kubectl apply -f kubernetes/cart/
-kubectl apply -f kubernetes/checkout/
-kubectl apply -f kubernetes/orders/
-kubectl apply -f kubernetes/ui/
-
-# Zero-Trust Security & Autoscaling Policies
-kubectl apply -f kubernetes/security/
-kubectl apply -f kubernetes/resilience/
-
-# In-Cluster SRE Automation Daemon
-kubectl apply -f kubernetes/automation/
-```
-
-### 4. Run the Python SRE Operations Engine:
-```bash
-# Automated incident lifecycle remediation (Detect -> Analyze -> Rollback -> Verify -> Report)
-python3 automation/ops_cli.py incident-lifecycle --service cart --auto-approve
-
-# Continuous cluster monitoring and Prometheus metrics HTTP exporter daemon
-python3 automation/ops_cli.py export-metrics --port 9102 --interval 15
-```
-
-### 5. Run Automation Unit & Integration Tests:
-```bash
-# Run 45 unit tests (100% mocked, runs in 0.19s)
-pytest automation/tests -m "not integration"
-
-# Run live Kubernetes cluster integration tests against Minikube / kind
-./scripts/run_integration_tests.sh
-```
+| Guide | Focus Area | Description |
+| :--- | :--- | :--- |
+| 📖 [`docs/CHAOS_RECOVERY_RUNBOOK.md`](docs/CHAOS_RECOVERY_RUNBOOK.md) | **Disaster Recovery** | Step-by-step chaos injection recipes, CrashLoopBackOff remediation, and RTO/RPO targets |
+| 🛡️ [`docs/IAM_LEAST_PRIVILEGE.md`](docs/IAM_LEAST_PRIVILEGE.md) | **Cloud Security** | Granular AWS IAM roles, GitHub OIDC trust policy, and Kubernetes RBAC permission matrix |
+| 🤖 [`docs/PYTHON_AUTOMATION.md`](docs/PYTHON_AUTOMATION.md) | **SRE Automation** | Architecture of the 7-stage incident orchestrator, collectors, analyzers, and Prometheus daemon |
+| ☸️ [`docs/KUBERNETES_EKS.md`](docs/KUBERNETES_EKS.md) | **Container Orchestration** | Manifest architecture, zero-trust NetworkPolicies, ResourceQuotas, HPA, and PDB guides |
+| 📊 [`monitoring/SLO.md`](monitoring/SLO.md) | **Reliability Engineering** | 99.0% availability SLO, PromQL formulas, multi-window burn rate alerts, and freeze policies |
+| 🏗️ [`docs/TERRAFORM_AWS.md`](docs/TERRAFORM_AWS.md) | **Infrastructure as Code** | AWS multi-AZ VPC, EKS cluster, managed node groups, ECR registries, and cost analysis |
+| 🔄 [`docs/GITHUB_ACTIONS_CICD.md`](docs/GITHUB_ACTIONS_CICD.md) | **Continuous Delivery** | Enterprise CI/CD pipeline, Trivy CVE security gates, CycloneDX SBOM, and OIDC federation |
+| 🐳 [`docs/DOCKER.md`](docs/DOCKER.md) | **Containerization** | Multi-stage Dockerfiles, non-root security (`UID: 1000`), and Compose orchestration |
+| 📈 [`docs/PROMETHEUS.md`](docs/PROMETHEUS.md) | **Metrics Scraping** | Prometheus Helm configuration, scrape endpoints, and alert rule evaluation |
+| 🖥️ [`docs/GRAFANA.md`](docs/GRAFANA.md) | **Dashboards** | Custom Grafana operational dashboards for Application, Kubernetes, and SRE metrics |
+| 🧪 [`docs/FAILURE_TESTING.md`](docs/FAILURE_TESTING.md) | **Chaos Testing** | Failure simulation playbooks covering node drain, network latency, and memory spikes |
+| 🔍 [`docs/SOURCE_CODE_AUDIT.md`](docs/SOURCE_CODE_AUDIT.md) | **Application Architecture**| Technical audit of upstream Java, Go, and Node.js microservices and dependencies |
 
 ---
 
-## 6. Teardown & Resource Cleanup
+## 9. License & Attribution
 
-To stop and remove local containers:
-```bash
-docker compose -f docker/docker-compose.yml down -v
-```
-
-To destroy provisioned AWS cloud infrastructure:
-```bash
-cd terraform/environments/dev
-terraform destroy -var-file="terraform.tfvars"
-```
-
----
-
-## 7. License & Attribution
-The upstream AWS Retail Store Sample Application source code in `application/` is licensed by Amazon Web Services under the **MIT-0 License** (see `application/LICENSE`).
-All custom platform engineering, Terraform modules, Kubernetes manifests, GitHub Actions workflows, observability configurations, and Python SRE automation implementations authored in the root repository are maintained under the **MIT License**.
-
+- The upstream **AWS Retail Store Sample Application** source code in [`application/`](application/) is licensed by Amazon Web Services under the **[MIT-0 License](application/LICENSE)**.
+- All custom platform engineering, Terraform modules, Kubernetes declarative manifests, GitHub Actions workflows, observability configurations, SRE automation code, and technical documentation authored in the root repository are licensed under the **[MIT License](application/LICENSE)**.
