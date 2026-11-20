@@ -14,7 +14,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](application/LICENSE)
 
 <p align="center">
-  <b>A production-grade, battle-tested Cloud Platform and Site Reliability Engineering (SRE) implementation for polyglot microservices on AWS EKS.</b>
+  <b>A production-grade,  battle-tested Cloud Platform and Site Reliability Engineering (SRE) implementation for polyglot microservices on AWS EKS.</b>
 </p>
 
 [Architecture](#1-high-level-cloud-architecture) •
