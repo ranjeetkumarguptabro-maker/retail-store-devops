@@ -16,6 +16,12 @@
   <b>A hands-on DevOps, Cloud Infrastructure, and Site Reliability Engineering (SRE) implementation for polyglot microservices on AWS, Kubernetes (K3s), Terraform, Prometheus, Grafana, and Python automation.</b>
 </p>
 
+<p align="center">
+  I built this project to take a multi-language retail application (Java, Go, and Node.js) all the way from local source code to a live, monitored Kubernetes cluster on AWS.<br/>
+  Everything from Terraform infrastructure and Amazon ECR container builds to automated GitHub Actions CI/CD and Trivy security checks runs end to end.<br/>
+  On top of the deployment, I configured Prometheus, Grafana, AWS CloudWatch, and a custom Python SRE engine to continuously monitor health, track SLOs, and catch issues early.
+</p>
+
 [Architecture](#1-high-level-cloud-architecture) •
 [AWS VPC](#2-aws-cloud-architecture--multi-account-vpc-topology) •
 [DevOps Loop](#3-enterprise-devops-infinity-loop-blueprint) •
