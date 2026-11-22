@@ -50,57 +50,6 @@
   <p><i>Figure: End-to-End Retail Store DevOps Architecture — Developer Workflow, Terraform Infrastructure as Code, GitHub Actions CI/CD (Build, Unit Test, Trivy CVE Scan, CycloneDX SBOM, ECR Push, Helm Deploy), Amazon EKS Microservices Mesh, S3 State Backup, and Prometheus/Grafana SRE Observability.</i></p>
 </div>
 
-<br/>
-
-```mermaid
-flowchart TD
-    subgraph SCM["1. Source Control & Developer Experience"]
-        DEV["Developer Workstation"] -->|"git push"| GH["GitHub Repository (main)"]
-    end
-
-    subgraph CICD["2. Enterprise CI/CD Pipeline (GitHub Actions)"]
-        GH --> CI["CI: Polyglot Builds & Unit Tests"]
-        CI --> TF_VAL["Terraform Format & Validate"]
-        CI --> PY_TEST["45 Automation Tests (0.18s)"]
-        TF_VAL --> SEC["Security: Secret Scanning & IaC Audit"]
-        SEC --> SBOM["CycloneDX SBOM Artifact Upload"]
-        SEC --> GATE["Pre-Deploy Trivy Container CVE Gate"]
-        GATE --> PROD_GATE{"Production Approval Gate"}
-        PROD_GATE -->|"Approved"| OIDC["AWS OIDC Federation (Keyless Auth)"]
-    end
-
-    subgraph AWS_INFRA["3. AWS Cloud Infrastructure (Terraform IaC)"]
-        OIDC --> TF_APPLY["Terraform Multi-AZ Architecture"]
-        TF_APPLY --> VPC["VPC (3 Public & 3 Private Subnets)"]
-        TF_APPLY --> ECR["Amazon ECR (KMS Encrypted & Lifecycle Policies)"]
-        TF_APPLY --> EKS["Amazon EKS 1.29 Managed Cluster"]
-    end
-
-    subgraph K8S_MESH["4. Kubernetes Orchestration Mesh (retail-store Namespace)"]
-        EKS --> NET_POL["Zero-Trust NetworkPolicies (Default Deny-All)"]
-        EKS --> QUOTA["Namespace ResourceQuotas & LimitRanges"]
-        NET_POL --> UI["Storefront UI (Java 21 Spring Boot)"]
-        UI -->|"Port 8080"| CATALOG["Catalog Service (Go Gin + MySQL)"]
-        UI -->|"Port 8080"| CART["Cart Service (Java 21 + DynamoDB/Redis)"]
-        UI -->|"Port 8080"| CHECKOUT["Checkout Service (Node.js NestJS)"]
-        CHECKOUT -->|"Port 8080"| ORDERS["Orders Service (Java 21 + RabbitMQ)"]
-        
-        HPA["HPA v2 (CPU 70% / RAM 80%)"] -.-> UI & CATALOG & CART & CHECKOUT & ORDERS
-        PDB["PDB (minAvailable: 1)"] -.-> UI & CATALOG & CART & CHECKOUT & ORDERS
-    end
-
-    subgraph SRE_OBS["5. Observability & Autonomous SRE Operations"]
-        PROM["Prometheus Server & Alertmanager"] -->|"Scrape Metrics"| UI & CATALOG & CART & CHECKOUT & ORDERS
-        PROM -->|"99.0% SLO Tracking"| SLO_ENGINE["30-Day Rolling Error Budget"]
-        SLO_ENGINE -->|"Alert on Burn Rate"| GRAFANA["Grafana Executive Dashboards"]
-        
-        SRE_DAEMON["SRE Ops Daemon (Port 9102)"] -->|"Continuous Health Polling"| K8S_MESH
-        SRE_DAEMON -->|"Prometheus Exporter"| PROM
-        SRE_DAEMON -->|"7-Stage Self-Healing"| LIFECYCLE["Incident Lifecycle Engine"]
-        LIFECYCLE -->|"Safe Rollback"| EKS
-    end
-```
-
 ---
 
 ## 📸 Visual Showcase & Cloud Platform Verification
@@ -154,10 +103,10 @@ flowchart TD
 
 ---
 
-### 6. Enterprise CI/CD Pipeline & Supply Chain Security
+### 6. Enterprise CI/CD Pipeline & GitHub Actions Verification
 <div align="center">
-  <img src="docs/images/cicd/github-actions-pipeline.png" alt="GitHub Actions Pipeline" width="90%" style="border-radius: 8px; border: 1px solid #334155;" />
-  <p><i>Figure 6: GitHub Actions CI/CD Pipeline executing multi-service build verification, Trivy secret/vulnerability scans, CycloneDX SBOM artifact generation, and Amazon EKS deployment.</i></p>
+  <img src="docs/images/cicd/github-actions-pipeline.png" alt="GitHub Actions Pipeline Runs" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Figure 6: Live GitHub Actions CI/CD Pipeline verification on branch main — Security Scan &amp; Compliance, Continuous Deployment (AWS EKS), and Continuous Integration workflows running with 100% green status.</i></p>
 </div>
 
 ---
