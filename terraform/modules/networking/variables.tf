@@ -27,9 +27,9 @@ variable "private_subnet_cidrs" {
 }
 
 variable "availability_zones" {
+  description = "Availability zones for the networking module"
   type        = list(string)
-  default     = ["us-east-1a", "us-east-1b"]
-  description = "AWS availability zones"
+  default     = ["eu-north-1a", "eu-north-1b"]
 }
 
 variable "enable_nat_gateway" {
