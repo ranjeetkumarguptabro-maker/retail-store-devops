@@ -17,9 +17,10 @@
   <b>A production-grade,  battle-tested Cloud Platform and Site Reliability Engineering (SRE) implementation for polyglot microservices on AWS EKS.</b>
 </p>
 
-[Visual Showcase](#-visual-showcase--cloud-platform-verification) •
 [Architecture](#1-high-level-cloud-architecture) •
-[DevOps Loop](#5-enterprise-devops-infinity-loop-blueprint) •
+[AWS VPC](#2-aws-cloud-architecture--multi-account-vpc-topology) •
+[DevOps Loop](#3-enterprise-devops-infinity-loop-blueprint) •
+[Live Screenshots](#-live-deployment--cloud-verification-screenshots) •
 [Microservices](#2-polyglot-microservices-matrix) •
 [SRE Engine](#3-autonomous-sre-incident-lifecycle-engine) •
 [Zero-Trust Security](#4-zero-trust-kubernetes-security--governance) •
@@ -52,61 +53,134 @@
 
 ---
 
-## 📸 Visual Showcase & Cloud Platform Verification
-
-> [!TIP]
-> **Capturing and showcasing your own live AWS Cloud screenshots?**  
-> Check out the step-by-step [**Visual Proof & Screenshots Guide**](docs/SCREENSHOTS_GUIDE.md) to learn how to capture, organize into `docs/images/`, and push your own AWS EKS, VPC, CloudWatch, and Grafana captures.
-
-### 1. Live Polyglot Storefront Web Experience
-<div align="center">
-  <img src="docs/images/application/retail-storefront-ui.png" alt="Retail Storefront Web UI" width="90%" style="border-radius: 8px; border: 1px solid #334155;" />
-  <p><i>Figure 1: Storefront UI (Java 21 Spring Boot) rendering dynamic product catalog, inventory status, and cart checkout mesh.</i></p>
-</div>
-
----
-
 ### 2. AWS Cloud Architecture & Multi-Account VPC Topology
 <div align="center">
   <img src="docs/images/aws/retail-devops-aws-architecture.png" alt="AWS Multi-Account VPC Architecture" width="100%" style="border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px;" />
-  <p><i>Figure 2a: Enterprise Multi-Account AWS Architecture — DevOps Platform Account, Multi-AZ VPC (Public &amp; Private Subnets, NAT Gateways, Internet Gateway, ALB, EKS Managed Cluster), and Dedicated SRE Observability Account.</i></p>
-</div>
-
-<div align="center">
-  <img src="docs/images/aws/aws-cloud-infrastructure.svg" alt="AWS Cloud &amp; EKS Topology" width="95%" style="border-radius: 8px;" />
-  <p><i>Figure 2b: Production AWS Infrastructure Topology: Multi-AZ Subnets, Node Groups, Amazon ECR KMS Encryption, and GitHub Actions OIDC Keyless Auth.</i></p>
+  <p><i>Enterprise Multi-Account AWS Architecture — DevOps Platform Account, Multi-AZ VPC (Public &amp; Private Subnets, NAT Gateways, Internet Gateway, ALB, EKS Managed Cluster), and Dedicated SRE Observability Account.</i></p>
 </div>
 
 ---
 
-### 3. Production Observability & 30-Day Rolling SLO Dashboard
-<div align="center">
-  <img src="docs/images/observability/grafana-slo-dashboard.svg" alt="Grafana 30-Day SLO Dashboard" width="95%" style="border-radius: 8px;" />
-  <p><i>Figure 3: Grafana Executive Overview monitoring the 99.0% Storefront Availability SLO, request throughput (2.4k req/s), HTTP 5xx error rate (0.02%), and p95 latency by service.</i></p>
-</div>
-
----
-
-### 4. Autonomous SRE Self-Healing Incident Lifecycle
-<div align="center">
-  <img src="docs/images/sre-automation/sre-incident-workflow.svg" alt="SRE Incident Lifecycle Workflow" width="95%" style="border-radius: 8px;" />
-  <p><i>Figure 4: Automated 7-stage incident detection &amp; rollback engine resolving CrashLoopBackOff on service 'cart' with zero human intervention.</i></p>
-</div>
-
----
-
-### 5. Enterprise DevOps Infinity Loop Blueprint
+### 3. Enterprise DevOps Infinity Loop Blueprint
 <div align="center">
   <img src="docs/images/cicd/devops-infinity-loop.png" alt="DevOps Infinity Loop Blueprint" width="100%" style="border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px;" />
-  <p><i>Figure 5: Enterprise DevOps Infinity Loop Blueprint — Continuous Planning &amp; Development (VS Code, GitHub, Python, Ruff, Pytest), Infrastructure &amp; Container Delivery (Terraform, Docker, Kubernetes, Helm), Cloud Deployment (AWS OIDC, Amazon EKS, S3), and SRE Observability (Prometheus, Grafana, Trivy, Alertmanager).</i></p>
+  <p><i>Enterprise DevOps Infinity Loop Blueprint — Continuous Planning &amp; Development (VS Code, GitHub, Python, Ruff, Pytest), Infrastructure &amp; Container Delivery (Terraform, Docker, Kubernetes, Helm), Cloud Deployment (AWS OIDC, Amazon EKS, S3), and SRE Observability (Prometheus, Grafana, Trivy, Alertmanager).</i></p>
 </div>
 
 ---
 
-### 6. Enterprise CI/CD Pipeline & GitHub Actions Verification
+## 📸 Live Deployment & Cloud Verification Screenshots
+
+End-to-end visual proof captured directly from the live AWS (`eu-north-1`), Kubernetes (K3s), Amazon ECR, GitHub Actions, Prometheus, Grafana, and AWS CloudWatch deployment.
+
+### A. Infrastructure as Code & AWS Cloud Provisioning (`eu-north-1`)
+
+#### 1. Modular Terraform Workspace & Validation
+<div align="center">
+  <img src="docs/images/live-proof/01-vscode-terraform-validate.png" alt="VS Code Terraform Validation" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Modular Terraform IaC composition (<code>networking</code>, <code>ecr</code>, <code>iam</code>, <code>eks</code>) with <code>terraform validate</code> passing cleanly.</i></p>
+</div>
+
+#### 2. AWS EC2 Kubernetes Host (`retail-store-k3s-server`)
+<div align="center">
+  <img src="docs/images/live-proof/02-aws-ec2-instance-summary.png" alt="AWS EC2 Instance Summary" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>AWS EC2 <code>t3.medium</code> instance running in Europe (Stockholm) <code>eu-north-1</code> with IMDSv2 enforced.</i></p>
+</div>
+
+#### 3. AWS EC2 Security Group Inbound Rules
+<div align="center">
+  <img src="docs/images/live-proof/03-aws-ec2-security-group.png" alt="AWS EC2 Security Group Rules" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Hardened inbound security group rules allowing HTTPS (443) and HTTP (80) web traffic with SSH (22) locked down to administrator IP.</i></p>
+</div>
+
+#### 4. AWS IAM Least-Privilege Role (`AmazonEC2ContainerRegistryReadOnly`)
+<div align="center">
+  <img src="docs/images/live-proof/04-aws-iam-ecr-role.png" alt="AWS IAM ECR Role" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Least-privilege IAM role configuration granting read-only access to Amazon ECR repositories.</i></p>
+</div>
+
+---
+
+### B. Kubernetes Cluster, Amazon ECR & Live Storefront Deployment
+
+#### 5. K3s Kubernetes Cluster Bootstrap
+<div align="center">
+  <img src="docs/images/live-proof/05-k3s-cluster-bootstrap.png" alt="K3s Cluster Bootstrap" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>K3s cluster (<code>v1.37.2+k3s1</code>) initialized on EC2 with CoreDNS, Metrics Server, Local Path Provisioner, and Traefik Ingress Controller running.</i></p>
+</div>
+
+#### 6. All 5 Microservice Images Pushed to Amazon ECR
+<div align="center">
+  <img src="docs/images/live-proof/06-aws-ecr-images-pushed.png" alt="Amazon ECR Images Verification" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>All five polyglot microservice images (<code>catalog</code>, <code>cart</code>, <code>checkout</code>, <code>orders</code>, <code>ui</code>) built and verified in Amazon ECR (<code>eu-north-1</code>).</i></p>
+</div>
+
+#### 7. Microservices & Traefik Ingress Running in `retail-store` Namespace
+<div align="center">
+  <img src="docs/images/live-proof/07-k8s-microservices-deployed.png" alt="Kubernetes Microservices Running" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>All 5 microservice pods (<code>1/1 Running</code>, <code>0 restarts</code>), ClusterIP services, HPA, and Traefik Ingress deployed in the <code>retail-store</code> namespace.</i></p>
+</div>
+
+#### 8. Live AWS Retail Storefront Web Application
+<div align="center">
+  <img src="docs/images/live-proof/08-live-storefront-web-ui.png" alt="Live Retail Storefront Web UI" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Live Retail Storefront UI served from AWS EC2/K3s rendering the dynamic product catalog and shopping cart mesh.</i></p>
+</div>
+
+---
+
+### C. Enterprise CI/CD Pipeline Verification
+
+#### 9. Live GitHub Actions CI/CD Workflows (All Green)
 <div align="center">
   <img src="docs/images/cicd/github-actions-pipeline.png" alt="GitHub Actions Pipeline Runs" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
-  <p><i>Figure 6: Live GitHub Actions CI/CD Pipeline verification on branch main — Security Scan &amp; Compliance, Continuous Deployment (AWS EKS), and Continuous Integration workflows running with 100% green status.</i></p>
+  <p><i>Live GitHub Actions runs on branch <code>main</code> — Security Scan &amp; Compliance, Continuous Deployment (AWS EKS), and Continuous Integration all passing.</i></p>
+</div>
+
+---
+
+### D. Production Observability: Prometheus, Grafana, SRE Engine & AWS CloudWatch
+
+#### 10. Prometheus Cluster Scrape Targets (`UP`)
+<div align="center">
+  <img src="docs/images/live-proof/09-prometheus-targets-cluster.png" alt="Prometheus Cluster Targets" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Prometheus target health verifying Kubernetes API server, nodes, cAdvisor, and cluster pod endpoints in state <code>UP</code>.</i></p>
+</div>
+
+#### 11. Prometheus Microservice Actuator Targets (`UP`)
+<div align="center">
+  <img src="docs/images/live-proof/10-prometheus-targets-microservices.png" alt="Prometheus Microservice Targets" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Prometheus actively scraping Spring Boot <code>/actuator/prometheus</code> metrics endpoints for <code>cart</code> and <code>orders</code> pods in the <code>retail-store</code> namespace.</i></p>
+</div>
+
+#### 12. Grafana — Application Overview & 30-Day Availability SLO
+<div align="center">
+  <img src="docs/images/live-proof/11-grafana-application-slo.png" alt="Grafana Application SLO Dashboard" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Live Grafana Application Overview tracking <b>100%</b> 30-day availability SLO (target 99%), 1.87 req/s throughput, 0% HTTP 5xx error rate, route latency, and 0 pod restarts.</i></p>
+</div>
+
+#### 13. Grafana — Kubernetes Cluster Overview
+<div align="center">
+  <img src="docs/images/live-proof/12-grafana-kubernetes-overview.png" alt="Grafana Kubernetes Overview" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Live Grafana Kubernetes Overview confirming 5/5 running pods, 0 failed/pending pods, 0 restarts, and real-time container CPU and memory usage.</i></p>
+</div>
+
+#### 14. Grafana — Infrastructure Capacity Overview
+<div align="center">
+  <img src="docs/images/live-proof/13-grafana-infrastructure-overview.png" alt="Grafana Infrastructure Overview" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Live Grafana Infrastructure Overview displaying ready Kubernetes nodes, cluster CPU cores, and total memory capacity.</i></p>
+</div>
+
+#### 15. Grafana — Python SRE Platform Operations Automation Engine
+<div align="center">
+  <img src="docs/images/live-proof/14-grafana-sre-automation-engine.png" alt="Grafana SRE Automation Engine Dashboard" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Live Grafana dashboard for the custom Python SRE Operations Automation Engine showing 68 automated health checks, all 5 microservices healthy, 0 rollbacks, 100% check success rate, and p95 audit latency.</i></p>
+</div>
+
+#### 16. AWS CloudWatch Infrastructure Telemetry (`eu-north-1`)
+<div align="center">
+  <img src="docs/images/live-proof/15-aws-cloudwatch-overview.png" alt="AWS CloudWatch Overview" width="100%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Live AWS CloudWatch overview monitoring EC2 CPU utilization, zero failed status checks, and EBS read/write I/O throughput in Stockholm (<code>eu-north-1</code>).</i></p>
 </div>
 
 ---
@@ -397,13 +471,11 @@ retail-store-devops/
 │   ├── SCREENSHOTS_GUIDE.md         # Guide to capturing & pushing AWS visual verification proof
 │   ├── IAM_LEAST_PRIVILEGE.md       # Least-privilege IAM security model & OIDC matrix
 │   ├── REPOSITORY_STRUCTURE_AUDIT.md# Upstream vs Custom Architecture Audit
-│   ├── images/                      # Architecture blueprints & operational screenshot proofs
+│   ├── images/                      # Architecture blueprints & live deployment proof screenshots
 │   │   ├── architecture/            # retail-store-devops-architecture.png
-│   │   ├── aws/                     # retail-devops-aws-architecture.png, aws-cloud-infrastructure.svg
+│   │   ├── aws/                     # retail-devops-aws-architecture.png
 │   │   ├── cicd/                    # devops-infinity-loop.png, github-actions-pipeline.png
-│   │   ├── application/             # retail-storefront-ui.png
-│   │   ├── observability/           # grafana-slo-dashboard.svg
-│   │   └── sre-automation/          # sre-incident-workflow.svg
+│   │   └── live-proof/              # 15 live AWS, EC2, IAM, ECR, K3s, Storefront, Prometheus, Grafana & CloudWatch captures
 │   └── upstream-app/                # Relocated upstream application docs & diagrams
 │
 ├── trivy.yaml                       # Trivy offline scan and skip directory configuration
