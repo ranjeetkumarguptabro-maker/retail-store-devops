@@ -47,16 +47,16 @@
 ## 1. High-Level Cloud Architecture
 
 <div align="center">
-  <img src="docs/images/architecture/retail-store-devops-architecture.png" alt="Retail Store DevOps End-to-End Architecture" width="100%" style="border-radius: 8px; border: 1px solid #334155; margin-bottom: 16px;" />
-  <p><i>Figure: End-to-End Retail Store DevOps Architecture — Developer Workflow, Terraform Infrastructure as Code, GitHub Actions CI/CD (Build, Unit Test, Trivy CVE Scan, CycloneDX SBOM, ECR Push, Helm Deploy), Amazon EKS Microservices Mesh, S3 State Backup, and Prometheus/Grafana SRE Observability.</i></p>
+  <img src="docs/images/architecture/k3s-kubernetes-cicd-architecture.png" alt="K3s Kubernetes CI/CD & DevOps Architecture" width="100%" style="border-radius: 8px; border: 1px solid #334155; margin-bottom: 16px;" />
+  <p><i>End-to-End Retail Store DevOps Architecture — Development Phase, Terraform Infrastructure as Code, GitHub Actions CI/CD (Build &amp; Test, Trivy Security Scan, Amazon ECR Push, Helm Deploy), K3s Kubernetes Microservices Cluster, Amazon S3 Backup, and Prometheus/Grafana Observability.</i></p>
 </div>
 
 ---
 
 ### 2. AWS Cloud Architecture & Multi-Account VPC Topology
 <div align="center">
-  <img src="docs/images/aws/retail-devops-aws-architecture.png" alt="AWS Multi-Account VPC Architecture" width="100%" style="border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px;" />
-  <p><i>Enterprise Multi-Account AWS Architecture — DevOps Platform Account, Multi-AZ VPC (Public &amp; Private Subnets, NAT Gateways, Internet Gateway, ALB, EKS Managed Cluster), and Dedicated SRE Observability Account.</i></p>
+  <img src="docs/images/aws/k3s-aws-devops-architecture.png" alt="AWS Multi-Account VPC & K3s Architecture" width="100%" style="border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px;" />
+  <p><i>Enterprise Multi-Account AWS Architecture — DevOps Platform Account, VPC Peering, AWS K3s Cluster Account (VPC &amp; 5 Polyglot Microservices), Dedicated Monitoring &amp; SRE Account (Prometheus, CloudWatch, Grafana), and Python SRE Automation Engine.</i></p>
 </div>
 
 ---
@@ -472,8 +472,8 @@ retail-store-devops/
 │   ├── IAM_LEAST_PRIVILEGE.md       # Least-privilege IAM security model & OIDC matrix
 │   ├── REPOSITORY_STRUCTURE_AUDIT.md# Upstream vs Custom Architecture Audit
 │   ├── images/                      # Architecture blueprints & live deployment proof screenshots
-│   │   ├── architecture/            # retail-store-devops-architecture.png
-│   │   ├── aws/                     # retail-devops-aws-architecture.png
+│   │   ├── architecture/            # k3s-kubernetes-cicd-architecture.png
+│   │   ├── aws/                     # k3s-aws-devops-architecture.png
 │   │   ├── cicd/                    # devops-infinity-loop.png, github-actions-pipeline.png
 │   │   └── live-proof/              # 15 live AWS, EC2, IAM, ECR, K3s, Storefront, Prometheus, Grafana & CloudWatch captures
 │   └── upstream-app/                # Relocated upstream application docs & diagrams
