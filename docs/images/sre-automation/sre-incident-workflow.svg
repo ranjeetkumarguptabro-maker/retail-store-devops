@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="100%" height="100%">
+  <defs>
+    <linearGradient id="sreBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090d16"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1000" height="480" rx="14" fill="url(#sreBg)" stroke="#1f2937" stroke-width="2"/>
+
+  <!-- Terminal Window Bar -->
+  <rect x="0" y="0" width="1000" height="45" rx="14" fill="#1f2937"/>
+  <circle cx="25" cy="22" r="6" fill="#ef4444"/>
+  <circle cx="45" cy="22" r="6" fill="#f59e0b"/>
+  <circle cx="65" cy="22" r="6" fill="#10b981"/>
+  <text x="500" y="28" fill="#9ca3af" font-family="monospace" font-size="13" text-anchor="middle">ops_cli.py — python3 automation/ops_cli.py incident-lifecycle --service cart --auto-approve</text>
+
+  <!-- 7-Stage Flow Header -->
+  <text x="50" y="85" fill="#f3f4f6" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="18" font-weight="700">Automated 7-Stage SRE Self-Healing Incident Lifecycle</text>
+  <text x="50" y="105" fill="#9ca3af" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12">Autonomous fault detection, evidence collection, rollback remediation, and post-mortem generation</text>
+
+  <!-- Stage Cards -->
+  <!-- 1. DETECT -->
+  <rect x="50" y="130" width="120" height="110" rx="8" fill="#1f2937" stroke="#ef4444" stroke-width="1.5"/>
+  <rect x="60" y="140" width="100" height="24" rx="4" fill="#ef4444"/>
+  <text x="110" y="156" fill="#ffffff" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle">1. DETECT</text>
+  <text x="110" y="180" fill="#fca5a5" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">CrashLoopBackOff</text>
+  <text x="110" y="196" fill="#fca5a5" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">OOMKilled</text>
+  <text x="110" y="212" fill="#fca5a5" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">ImagePullBackOff</text>
+
+  <!-- Arrow -->
+  <path d="M 175 185 L 188 185" stroke="#6b7280" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 2. COLLECT -->
+  <rect x="195" y="130" width="120" height="110" rx="8" fill="#1f2937" stroke="#3b82f6" stroke-width="1.5"/>
+  <rect x="205" y="140" width="100" height="24" rx="4" fill="#3b82f6"/>
+  <text x="255" y="156" fill="#ffffff" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle">2. COLLECT</text>
+  <text x="255" y="180" fill="#93c5fd" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Container Logs</text>
+  <text x="255" y="196" fill="#93c5fd" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">K8s Warning Events</text>
+  <text x="255" y="212" fill="#93c5fd" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Exit Code 137/1</text>
+
+  <!-- Arrow -->
+  <path d="M 320 185 L 333 185" stroke="#6b7280" stroke-width="2"/>
+
+  <!-- 3. ANALYZE -->
+  <rect x="340" y="130" width="120" height="110" rx="8" fill="#1f2937" stroke="#8b5cf6" stroke-width="1.5"/>
+  <rect x="350" y="140" width="100" height="24" rx="4" fill="#8b5cf6"/>
+  <text x="400" y="156" fill="#ffffff" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle">3. ANALYZE</text>
+  <text x="400" y="180" fill="#c4b5fd" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Root-Cause Parser</text>
+  <text x="400" y="196" fill="#c4b5fd" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Stack Trace Match</text>
+  <text x="400" y="212" fill="#c4b5fd" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Severity: CRITICAL</text>
+
+  <!-- Arrow -->
+  <path d="M 465 185 L 478 185" stroke="#6b7280" stroke-width="2"/>
+
+  <!-- 4. RECOMMEND -->
+  <rect x="485" y="130" width="120" height="110" rx="8" fill="#1f2937" stroke="#eab308" stroke-width="1.5"/>
+  <rect x="495" y="140" width="100" height="24" rx="4" fill="#eab308"/>
+  <text x="545" y="156" fill="#1f2937" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle">4. RECOMMEND</text>
+  <text x="545" y="180" fill="#fde047" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Rollback Target</text>
+  <text x="545" y="196" fill="#fde047" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Rev 2 (Stable)</text>
+  <text x="545" y="212" fill="#fde047" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Safety Preflight</text>
+
+  <!-- Arrow -->
+  <path d="M 610 185 L 623 185" stroke="#6b7280" stroke-width="2"/>
+
+  <!-- 5. GATE & EXEC -->
+  <rect x="630" y="130" width="120" height="110" rx="8" fill="#1f2937" stroke="#f97316" stroke-width="1.5"/>
+  <rect x="640" y="140" width="100" height="24" rx="4" fill="#f97316"/>
+  <text x="690" y="156" fill="#ffffff" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle">5. EXECUTE</text>
+  <text x="690" y="180" fill="#fed7aa" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Approval Gate</text>
+  <text x="690" y="196" fill="#fed7aa" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">AppsV1Api Patch</text>
+  <text x="690" y="212" fill="#fed7aa" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Rollback Trigger</text>
+
+  <!-- Arrow -->
+  <path d="M 755 185 L 768 185" stroke="#6b7280" stroke-width="2"/>
+
+  <!-- 6. VERIFY -->
+  <rect x="775" y="130" width="95" height="110" rx="8" fill="#1f2937" stroke="#10b981" stroke-width="1.5"/>
+  <rect x="782" y="140" width="80" height="24" rx="4" fill="#10b981"/>
+  <text x="822" y="156" fill="#ffffff" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle">6. VERIFY</text>
+  <text x="822" y="180" fill="#a7f3d0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">HTTP 200</text>
+  <text x="822" y="196" fill="#a7f3d0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Rollout OK</text>
+  <text x="822" y="212" fill="#a7f3d0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">0 CrashLoops</text>
+
+  <!-- Arrow -->
+  <path d="M 875 185 L 888 185" stroke="#6b7280" stroke-width="2"/>
+
+  <!-- 7. REPORT -->
+  <rect x="895" y="130" width="90" height="110" rx="8" fill="#1f2937" stroke="#10b981" stroke-width="1.5"/>
+  <rect x="902" y="140" width="75" height="24" rx="4" fill="#10b981"/>
+  <text x="940" y="156" fill="#ffffff" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle">7. REPORT</text>
+  <text x="940" y="180" fill="#a7f3d0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">JSON Telemetry</text>
+  <text x="940" y="196" fill="#a7f3d0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Markdown</text>
+  <text x="940" y="212" fill="#a7f3d0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Post-Mortem</text>
+
+  <!-- Terminal Output Box below -->
+  <rect x="50" y="260" width="935" height="195" rx="8" fill="#030712" stroke="#374151"/>
+  <text x="70" y="290" fill="#10b981" font-family="monospace" font-size="12">$ python3 automation/ops_cli.py incident-lifecycle --service cart --auto-approve</text>
+  <text x="70" y="315" fill="#f97316" font-family="monospace" font-size="12">[INFO] Incident detected: CrashLoopBackOff on service 'cart' (Pod: cart-68f498c-9x2)</text>
+  <text x="70" y="335" fill="#60a5fa" font-family="monospace" font-size="12">[INFO] Diagnostic logs collected: 84 lines | 4 events captured</text>
+  <text x="70" y="355" fill="#eab308" font-family="monospace" font-size="12">[INFO] Executing rollback to revision 2... Rollout status: Completed successfully.</text>
+  <text x="70" y="375" fill="#34d399" font-family="monospace" font-size="12">[SUCCESS] Recovery validated: HTTP /actuator/health returned 200 OK (14ms)</text>
+  <text x="70" y="395" fill="#9ca3af" font-family="monospace" font-size="12">[ARTIFACT] Saved: reports/incidents/INC-20261122-cart.json &amp; reports/incidents/INC-20261122-cart.md</text>
+  <text x="70" y="425" fill="#10b981" font-family="monospace" font-size="12" font-weight="700">✓ LIFECYCLE COMPLETED: Service restored to healthy state in 1.42s (0 human intervention)</text>
+</svg>

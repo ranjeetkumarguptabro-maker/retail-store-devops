@@ -17,6 +17,7 @@
   <b>A production-grade,  battle-tested Cloud Platform and Site Reliability Engineering (SRE) implementation for polyglot microservices on AWS EKS.</b>
 </p>
 
+[Visual Showcase](#-visual-showcase--cloud-platform-verification) •
 [Architecture](#1-high-level-cloud-architecture) •
 [Microservices](#2-polyglot-microservices-matrix) •
 [SRE Engine](#3-autonomous-sre-incident-lifecycle-engine) •
@@ -91,6 +92,52 @@ flowchart TD
         LIFECYCLE -->|"Safe Rollback"| EKS
     end
 ```
+
+---
+
+## 📸 Visual Showcase & Cloud Platform Verification
+
+> [!TIP]
+> **Capturing and showcasing your own live AWS Cloud screenshots?**  
+> Check out the step-by-step [**Visual Proof & Screenshots Guide**](docs/SCREENSHOTS_GUIDE.md) to learn how to capture, organize into `docs/images/`, and push your own AWS EKS, VPC, CloudWatch, and Grafana captures.
+
+### 1. Live Polyglot Storefront Web Experience
+<div align="center">
+  <img src="docs/images/application/retail-storefront-ui.png" alt="Retail Storefront Web UI" width="90%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Figure 1: Storefront UI (Java 21 Spring Boot) rendering dynamic product catalog, inventory status, and cart checkout mesh.</i></p>
+</div>
+
+---
+
+### 2. AWS Cloud Architecture & Amazon EKS Topology
+<div align="center">
+  <img src="docs/images/aws/aws-cloud-infrastructure.svg" alt="AWS Cloud &amp; EKS Topology" width="95%" style="border-radius: 8px;" />
+  <p><i>Figure 2: Production AWS Architecture: Multi-AZ VPC (3 public &amp; 3 private subnets), EKS v1.29 Managed Cluster, Managed Node Groups, ECR, and OIDC Keyless CI/CD.</i></p>
+</div>
+
+---
+
+### 3. Production Observability & 30-Day Rolling SLO Dashboard
+<div align="center">
+  <img src="docs/images/observability/grafana-slo-dashboard.svg" alt="Grafana 30-Day SLO Dashboard" width="95%" style="border-radius: 8px;" />
+  <p><i>Figure 3: Grafana Executive Overview monitoring the 99.0% Storefront Availability SLO, request throughput (2.4k req/s), HTTP 5xx error rate (0.02%), and p95 latency by service.</i></p>
+</div>
+
+---
+
+### 4. Autonomous SRE Self-Healing Incident Lifecycle
+<div align="center">
+  <img src="docs/images/sre-automation/sre-incident-workflow.svg" alt="SRE Incident Lifecycle Workflow" width="95%" style="border-radius: 8px;" />
+  <p><i>Figure 4: Automated 7-stage incident detection &amp; rollback engine resolving CrashLoopBackOff on service 'cart' with zero human intervention.</i></p>
+</div>
+
+---
+
+### 5. Enterprise CI/CD Pipeline & Supply Chain Security
+<div align="center">
+  <img src="docs/images/cicd/github-actions-pipeline.png" alt="GitHub Actions Pipeline" width="90%" style="border-radius: 8px; border: 1px solid #334155;" />
+  <p><i>Figure 5: GitHub Actions CI/CD Pipeline executing multi-service build verification, Trivy secret/vulnerability scans, CycloneDX SBOM artifact generation, and Amazon EKS deployment.</i></p>
+</div>
 
 ---
 
@@ -377,9 +424,11 @@ retail-store-devops/
 │   ├── PYTHON_AUTOMATION.md         # Stage 9: Python operations automation guide
 │   ├── FAILURE_TESTING.md           # Stage 10: Chaos engineering & failure experiments
 │   ├── CHAOS_RECOVERY_RUNBOOK.md    # SRE Disaster recovery runbook & chaos injection scenarios
+│   ├── SCREENSHOTS_GUIDE.md         # Guide to capturing & pushing AWS visual verification proof
 │   ├── IAM_LEAST_PRIVILEGE.md       # Least-privilege IAM security model & OIDC matrix
 │   ├── REPOSITORY_STRUCTURE_AUDIT.md# Upstream vs Custom Architecture Audit
 │   ├── RESTRUCTURE_REPORT.md        # Data and Application Separation Migration Report
+│   ├── images/                      # Screenshot repository (aws, k8s, cicd, observability, sre)
 │   └── upstream-app/                # Relocated upstream application docs & diagrams
 │
 ├── trivy.yaml                       # Trivy offline scan and skip directory configuration
@@ -395,6 +444,7 @@ retail-store-devops/
 
 | Guide | Focus Area | Description |
 | :--- | :--- | :--- |
+| 📸 [`docs/SCREENSHOTS_GUIDE.md`](docs/SCREENSHOTS_GUIDE.md) | **Visual Portfolio Proof** | Step-by-step runbook to capture, organize, and push live AWS, Kubernetes, and Grafana screenshots |
 | 📖 [`docs/CHAOS_RECOVERY_RUNBOOK.md`](docs/CHAOS_RECOVERY_RUNBOOK.md) | **Disaster Recovery** | Step-by-step chaos injection recipes, CrashLoopBackOff remediation, and RTO/RPO targets |
 | 🛡️ [`docs/IAM_LEAST_PRIVILEGE.md`](docs/IAM_LEAST_PRIVILEGE.md) | **Cloud Security** | Granular AWS IAM roles, GitHub OIDC trust policy, and Kubernetes RBAC permission matrix |
 | 🤖 [`docs/PYTHON_AUTOMATION.md`](docs/PYTHON_AUTOMATION.md) | **SRE Automation** | Architecture of the 7-stage incident orchestrator, collectors, analyzers, and Prometheus daemon |
