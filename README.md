@@ -19,6 +19,7 @@
 
 [Visual Showcase](#-visual-showcase--cloud-platform-verification) •
 [Architecture](#1-high-level-cloud-architecture) •
+[DevOps Loop](#5-enterprise-devops-infinity-loop-blueprint) •
 [Microservices](#2-polyglot-microservices-matrix) •
 [SRE Engine](#3-autonomous-sre-incident-lifecycle-engine) •
 [Zero-Trust Security](#4-zero-trust-kubernetes-security--governance) •
@@ -43,6 +44,13 @@
 ---
 
 ## 1. High-Level Cloud Architecture
+
+<div align="center">
+  <img src="docs/images/architecture/retail-store-devops-architecture.png" alt="Retail Store DevOps End-to-End Architecture" width="100%" style="border-radius: 8px; border: 1px solid #334155; margin-bottom: 16px;" />
+  <p><i>Figure: End-to-End Retail Store DevOps Architecture — Developer Workflow, Terraform Infrastructure as Code, GitHub Actions CI/CD (Build, Unit Test, Trivy CVE Scan, CycloneDX SBOM, ECR Push, Helm Deploy), Amazon EKS Microservices Mesh, S3 State Backup, and Prometheus/Grafana SRE Observability.</i></p>
+</div>
+
+<br/>
 
 ```mermaid
 flowchart TD
@@ -109,10 +117,15 @@ flowchart TD
 
 ---
 
-### 2. AWS Cloud Architecture & Amazon EKS Topology
+### 2. AWS Cloud Architecture & Multi-Account VPC Topology
+<div align="center">
+  <img src="docs/images/aws/retail-devops-aws-architecture.png" alt="AWS Multi-Account VPC Architecture" width="100%" style="border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px;" />
+  <p><i>Figure 2a: Enterprise Multi-Account AWS Architecture — DevOps Platform Account, Multi-AZ VPC (Public &amp; Private Subnets, NAT Gateways, Internet Gateway, ALB, EKS Managed Cluster), and Dedicated SRE Observability Account.</i></p>
+</div>
+
 <div align="center">
   <img src="docs/images/aws/aws-cloud-infrastructure.svg" alt="AWS Cloud &amp; EKS Topology" width="95%" style="border-radius: 8px;" />
-  <p><i>Figure 2: Production AWS Architecture: Multi-AZ VPC (3 public &amp; 3 private subnets), EKS v1.29 Managed Cluster, Managed Node Groups, ECR, and OIDC Keyless CI/CD.</i></p>
+  <p><i>Figure 2b: Production AWS Infrastructure Topology: Multi-AZ Subnets, Node Groups, Amazon ECR KMS Encryption, and GitHub Actions OIDC Keyless Auth.</i></p>
 </div>
 
 ---
@@ -133,10 +146,18 @@ flowchart TD
 
 ---
 
-### 5. Enterprise CI/CD Pipeline & Supply Chain Security
+### 5. Enterprise DevOps Infinity Loop Blueprint
+<div align="center">
+  <img src="docs/images/cicd/devops-infinity-loop.png" alt="DevOps Infinity Loop Blueprint" width="100%" style="border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px;" />
+  <p><i>Figure 5: Enterprise DevOps Infinity Loop Blueprint — Continuous Planning &amp; Development (VS Code, GitHub, Python, Ruff, Pytest), Infrastructure &amp; Container Delivery (Terraform, Docker, Kubernetes, Helm), Cloud Deployment (AWS OIDC, Amazon EKS, S3), and SRE Observability (Prometheus, Grafana, Trivy, Alertmanager).</i></p>
+</div>
+
+---
+
+### 6. Enterprise CI/CD Pipeline & Supply Chain Security
 <div align="center">
   <img src="docs/images/cicd/github-actions-pipeline.png" alt="GitHub Actions Pipeline" width="90%" style="border-radius: 8px; border: 1px solid #334155;" />
-  <p><i>Figure 5: GitHub Actions CI/CD Pipeline executing multi-service build verification, Trivy secret/vulnerability scans, CycloneDX SBOM artifact generation, and Amazon EKS deployment.</i></p>
+  <p><i>Figure 6: GitHub Actions CI/CD Pipeline executing multi-service build verification, Trivy secret/vulnerability scans, CycloneDX SBOM artifact generation, and Amazon EKS deployment.</i></p>
 </div>
 
 ---
@@ -427,8 +448,13 @@ retail-store-devops/
 │   ├── SCREENSHOTS_GUIDE.md         # Guide to capturing & pushing AWS visual verification proof
 │   ├── IAM_LEAST_PRIVILEGE.md       # Least-privilege IAM security model & OIDC matrix
 │   ├── REPOSITORY_STRUCTURE_AUDIT.md# Upstream vs Custom Architecture Audit
-│   ├── RESTRUCTURE_REPORT.md        # Data and Application Separation Migration Report
-│   ├── images/                      # Screenshot repository (aws, k8s, cicd, observability, sre)
+│   ├── images/                      # Architecture blueprints & operational screenshot proofs
+│   │   ├── architecture/            # retail-store-devops-architecture.png
+│   │   ├── aws/                     # retail-devops-aws-architecture.png, aws-cloud-infrastructure.svg
+│   │   ├── cicd/                    # devops-infinity-loop.png, github-actions-pipeline.png
+│   │   ├── application/             # retail-storefront-ui.png
+│   │   ├── observability/           # grafana-slo-dashboard.svg
+│   │   └── sre-automation/          # sre-incident-workflow.svg
 │   └── upstream-app/                # Relocated upstream application docs & diagrams
 │
 ├── trivy.yaml                       # Trivy offline scan and skip directory configuration

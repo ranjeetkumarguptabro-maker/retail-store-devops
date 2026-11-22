@@ -21,6 +21,9 @@ Having clear, high-resolution screenshots embedded in your README and documentat
 
 | Category | File Path | What to Capture in the Screenshot |
 | :--- | :--- | :--- |
+| **Project Architecture** | `docs/images/architecture/retail-store-devops-architecture.png` | End-to-end DevOps architecture linking developer workstation, GitHub Actions, Terraform IaC, EKS workloads, S3 backup, and SRE observability. |
+| **AWS Architecture & VPC** | `docs/images/aws/retail-devops-aws-architecture.png` | Multi-account AWS architecture blueprint showing DevOps platform account, VPC peering, Multi-AZ subnets, ALB, EKS, and SRE account. |
+| **DevOps Infinity Loop** | `docs/images/cicd/devops-infinity-loop.png` | Complete continuous DevOps lifecycle blueprint mapping VS Code, GitHub, Pytest, Docker, Terraform, Helm, AWS OIDC, EKS, and Prometheus/Grafana. |
 | **Storefront App** | `docs/images/application/retail-storefront-ui.png` | Storefront web UI in browser (`http://localhost:8888` or AWS ALB endpoint) showing catalog products and active cart. |
 | **AWS EKS Console** | `docs/images/aws/eks-cluster-console.png` | AWS Management Console ➔ EKS ➔ Clusters ➔ `dev-retail-store` showing `Active` status, Kubernetes v1.29, and subnets. |
 | **AWS Node Groups** | `docs/images/aws/eks-nodegroups.png` | AWS EKS Console ➔ Compute tab showing Managed Node Group (`m5.large`), desired/min/max capacity, and instances. |
@@ -67,12 +70,13 @@ mv ~/Desktop/Screen\ Shot*.png docs/images/sre-automation/incident-lifecycle-ter
 Directory structure in the repo:
 ```text
 docs/images/
-├── application/         # Live Storefront UI screenshots
-├── aws/                 # AWS Management Console captures (EKS, VPC, ECR, IAM)
-├── kubernetes/          # Terminal captures of kubectl workloads, HPAs, NetworkPolicies
-├── cicd/                # GitHub Actions pipeline passes, Trivy security reports, SBOM
-├── observability/       # Grafana executive dashboards and Prometheus targets
-└── sre-automation/      # SRE incident lifecycle post-mortems and terminal runs
+├── architecture/    # End-to-end retail store devops architecture diagram
+├── aws/             # Multi-account AWS architecture & VPC topology diagrams
+├── cicd/            # DevOps infinity loop blueprint & GitHub Actions pipeline passes
+├── application/     # Live Storefront UI screenshots
+├── kubernetes/      # Terminal captures of kubectl workloads, HPAs, NetworkPolicies
+├── observability/   # Grafana executive dashboards and Prometheus targets
+└── sre-automation/  # SRE incident lifecycle post-mortems and terminal runs
 ```
 
 ---
