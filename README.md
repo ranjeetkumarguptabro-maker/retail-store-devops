@@ -3,15 +3,6 @@
 # 🛍️ AWS Retail Store DevOps Platform
 ### Cloud-Native Microservices, Kubernetes (K3s), AWS Infrastructure & Python SRE Automation
 
-[![CI](https://github.com/ranjeetkumarguptabro-maker/retail-store-devops/actions/workflows/ci.yml/badge.svg)](https://github.com/ranjeetkumarguptabro-maker/retail-store-devops/actions/workflows/ci.yml)
-[![Security](https://github.com/ranjeetkumarguptabro-maker/retail-store-devops/actions/workflows/security.yml/badge.svg)](https://github.com/ranjeetkumarguptabro-maker/retail-store-devops/actions/workflows/security.yml)
-[![Deployment](https://github.com/ranjeetkumarguptabro-maker/retail-store-devops/actions/workflows/deploy.yml/badge.svg)](https://github.com/ranjeetkumarguptabro-maker/retail-store-devops/actions/workflows/deploy.yml)
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-K3s%20%2F%20EKS-326CE5?logo=kubernetes&logoColor=white)](kubernetes/)
-[![Terraform](https://img.shields.io/badge/Terraform-v1.5%2B-844FBA?logo=terraform&logoColor=white)](terraform/)
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](automation/)
-[![Tests](https://img.shields.io/badge/Unit%20Tests-45%2F45%20Passing-brightgreen?logo=pytest&logoColor=white)](automation/tests/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](application/LICENSE)
-
 <p align="center">
   <b>A hands-on DevOps, Cloud Infrastructure, and Site Reliability Engineering (SRE) implementation for polyglot microservices on AWS, Kubernetes (K3s), Terraform, Prometheus, Grafana, and Python automation.</b>
 </p>
